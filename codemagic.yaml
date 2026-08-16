@@ -1,0 +1,25 @@
+workflows:
+  ios-workflow:
+    name: Wafar iOS
+    instance_type: mac_mini_m2
+
+    environment:
+      flutter: 3.44.3
+      xcode: 16.4
+      cocoapods: 1.16.2
+
+    scripts:
+      - name: Disable Swift Package Manager
+        script: flutter config --no-enable-swift-package-manager
+
+      - name: Clean Flutter project
+        script: flutter clean
+
+      - name: Get Flutter dependencies
+        script: flutter pub get
+
+      - name: Build iOS
+        script: flutter build ios --debug
+
+    artifacts:
+      - build/ios/Debug-iphoneos/*.app
