@@ -12,11 +12,11 @@ workflows:
       - name: Disable Swift Package Manager
         script: flutter config --no-enable-swift-package-manager
 
-      - name: Get Flutter dependencies
-        script: flutter pub get
-
       - name: Clean Flutter project
         script: flutter clean
+
+      - name: Get Flutter dependencies
+        script: flutter pub get
 
       - name: Build iOS
         script: flutter build ios --debug --no-codesign
