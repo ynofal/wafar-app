@@ -19,7 +19,7 @@ workflows:
         script: flutter pub get
 
       - name: Build iOS
-        script: flutter build ios --debug --no-codesign
+        script: flutter build ios --debug
 
     artifacts:
       - build/ios/Debug-iphoneos/*.app
