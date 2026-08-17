@@ -10,16 +10,35 @@ workflows:
 
     scripts:
       - name: Disable Swift Package Manager
-        script: flutter config --no-enable-swift-package-manager
+        script: |
+          flutter config --no-enable-swift-package-manager
 
       - name: Clean Flutter project
-        script: flutter clean
+        script: |
+          flutter clean
+
+      - name: Clean iOS Swift Package Manager
+        script: |
+          rm -rf ~/Library/Developer/Xcode/DerivedData
+          rm -rf ~/Library/Caches/org.swift.swiftpm
+          rm -rf ~/Library/org.swift.swiftpm
+          rm -rf ios/.symlinks
+          rm -rf ios/Pods
+          rm -rf ios/Podfile.lock
+          find ios -name "Package.resolved" -delete
 
       - name: Get Flutter dependencies
-        script: flutter pub get
+        script: |
+          flutter pub get
+
+      - name: Install CocoaPods
+        script: |
+          cd ios
+          pod install --repo-update
 
       - name: Build iOS
-        script: flutter build ios --debug --no-codesign
+        script: |
+          flutter build ipa --debug --no-codesign
 
     artifacts:
-      - build/ios/Debug-iphoneos/*.app
+      - build/ios/ipa/*.ipa
