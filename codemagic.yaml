@@ -10,87 +10,34 @@ workflows:
 
     scripts:
 
-      - name: Disable Flutter Swift Package Manager
+      - name: Disable Swift Package Manager
         script: |
           flutter config --no-enable-swift-package-manager
 
-      - name: Remove Flutter Generated Swift Package
+      - name: Clean Flutter
         script: |
-          rm -rf ios/Flutter/ephemeral
+          flutter clean
+
+      - name: Remove iOS generated files
+        script: |
           rm -rf ios/.symlinks
           rm -rf ios/Pods
           rm -rf ios/Podfile.lock
+          rm -rf ios/Flutter/ephemeral
+          rm -rf build
+
+      - name: Remove Xcode Swift Package Manager data
+        script: |
           rm -rf ~/Library/Developer/Xcode/DerivedData
           rm -rf ~/Library/Caches/org.swift.swiftpm
+          rm -rf ~/Library/Developer/Xcode/SourcePackages
           rm -rf ~/Library/org.swift.swiftpm
+          rm -rf ~/Library/Caches/com.apple.dt.Xcode
 
-      - name: Remove Swift Package from Xcode Project
+      - name: Remove project Swift Package data
         script: |
-          python3 - <<'PY'
-          import re
-
-          path = "ios/Runner.xcodeproj/project.pbxproj"
-
-          with open(path, "r") as f:
-              data = f.read()
-
-          data = re.sub(
-              r'\s*packageReferences\s*=\s*\(\s*781AD8BC2B33823900A9FFBB /\* XCLocalSwiftPackageReference "Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage" \*/\s*\);',
-              '',
-              data
-          )
-
-          data = re.sub(
-              r'\s*packageProductDependencies\s*=\s*\(\s*78A3181F2AECB46A00862997 /\* FlutterGeneratedPluginSwiftPackage \*/\s*\);',
-              '',
-              data
-          )
-
-          data = re.sub(
-              r'\s*78A318202AECB46A00862997 /\* FlutterGeneratedPluginSwiftPackage in Frameworks \*/ = \{.*?\};',
-              '',
-              data,
-              flags=re.DOTALL
-          )
-
-          data = re.sub(
-              r'\s*78E0A7A72DC9AD7400C4905E /\* FlutterGeneratedPluginSwiftPackage \*/ = \{.*?\};',
-              '',
-              data,
-              flags=re.DOTALL
-          )
-
-          data = re.sub(
-              r'\s*781AD8BC2B33823900A9FFBB /\* XCLocalSwiftPackageReference "Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage" \*/ = \{.*?\};',
-              '',
-              data,
-              flags=re.DOTALL
-          )
-
-          data = re.sub(
-              r'\s*78A3181F2AECB46A00862997 /\* FlutterGeneratedPluginSwiftPackage \*/ = \{.*?\};',
-              '',
-              data,
-              flags=re.DOTALL
-          )
-
-          data = re.sub(
-              r'\s*78E0A7A72DC9AD7400C4905E /\* FlutterGeneratedPluginSwiftPackage \*/,\n',
-              '',
-              data
-          )
-
-          data = re.sub(
-              r'\s*78A318202AECB46A00862997 /\* FlutterGeneratedPluginSwiftPackage in Frameworks \*/,\n',
-              '',
-              data
-          )
-
-          with open(path, "w") as f:
-              f.write(data)
-
-          print("Swift Package reference removed successfully")
-          PY
+          find ios -name "*.xcworkspace" -type d -prune -exec rm -rf {} +
+          find ios -name "Package.resolved" -delete
 
       - name: Get Flutter dependencies
         script: |
@@ -101,13 +48,11 @@ workflows:
           cd ios
           pod install --repo-update
 
-      - name: Configure Code Signing
+      - name: Verify CocoaPods
         script: |
-          xcode-project use-profiles
+          cd ios
+          pod list
 
       - name: Build iOS
         script: |
-          flutter build ipa --debug --export-options-plist /Users/builder/export_options.plist
-
-    artifacts:
-      - build/ios/ipa/*.ipa
+          flutter build ipa --debug --no-codesign
