@@ -17,15 +17,14 @@ workflows:
         script: |
           flutter clean
 
-      - name: Clean iOS Swift Package Manager
+      - name: Clean iOS dependencies
         script: |
-          rm -rf ~/Library/Developer/Xcode/DerivedData
-          rm -rf ~/Library/Caches/org.swift.swiftpm
-          rm -rf ~/Library/org.swift.swiftpm
           rm -rf ios/.symlinks
           rm -rf ios/Pods
           rm -rf ios/Podfile.lock
-          find ios -name "Package.resolved" -delete
+          rm -rf ~/Library/Developer/Xcode/DerivedData
+          rm -rf ~/Library/Caches/org.swift.swiftpm
+          rm -rf ~/Library/org.swift.swiftpm
 
       - name: Get Flutter dependencies
         script: |
@@ -38,7 +37,4 @@ workflows:
 
       - name: Build iOS
         script: |
-          flutter build ipa --debug --no-codesign
-
-    artifacts:
-      - build/ios/ipa/*.ipa
+          flutter build ios --debug --no-codesign
