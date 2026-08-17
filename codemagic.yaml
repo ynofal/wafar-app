@@ -34,35 +34,32 @@ workflows:
           with open(path, "r") as f:
               data = f.read()
 
-          # Remove FlutterGeneratedPluginSwiftPackage from package references
           data = re.sub(
               r'\s*packageReferences\s*=\s*\(\s*781AD8BC2B33823900A9FFBB /\* XCLocalSwiftPackageReference "Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage" \*/\s*\);',
               '',
               data
           )
 
-          # Remove the package dependency from Runner target
           data = re.sub(
               r'\s*packageProductDependencies\s*=\s*\(\s*78A3181F2AECB46A00862997 /\* FlutterGeneratedPluginSwiftPackage \*/\s*\);',
               '',
               data
           )
 
-          # Remove PBXBuildFile entry
           data = re.sub(
               r'\s*78A318202AECB46A00862997 /\* FlutterGeneratedPluginSwiftPackage in Frameworks \*/ = \{.*?\};',
               '',
-              data
+              data,
+              flags=re.DOTALL
           )
 
-          # Remove framework reference
           data = re.sub(
               r'\s*78E0A7A72DC9AD7400C4905E /\* FlutterGeneratedPluginSwiftPackage \*/ = \{.*?\};',
               '',
-              data
+              data,
+              flags=re.DOTALL
           )
 
-          # Remove XCLocalSwiftPackageReference
           data = re.sub(
               r'\s*781AD8BC2B33823900A9FFBB /\* XCLocalSwiftPackageReference "Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage" \*/ = \{.*?\};',
               '',
@@ -70,7 +67,6 @@ workflows:
               flags=re.DOTALL
           )
 
-          # Remove XCSwiftPackageProductDependency
           data = re.sub(
               r'\s*78A3181F2AECB46A00862997 /\* FlutterGeneratedPluginSwiftPackage \*/ = \{.*?\};',
               '',
@@ -78,14 +74,12 @@ workflows:
               flags=re.DOTALL
           )
 
-          # Remove FlutterGeneratedPluginSwiftPackage from Flutter group
           data = re.sub(
               r'\s*78E0A7A72DC9AD7400C4905E /\* FlutterGeneratedPluginSwiftPackage \*/,\n',
               '',
               data
           )
 
-          # Remove FlutterGeneratedPluginSwiftPackage from Frameworks build phase
           data = re.sub(
               r'\s*78A318202AECB46A00862997 /\* FlutterGeneratedPluginSwiftPackage in Frameworks \*/,\n',
               '',
@@ -95,7 +89,7 @@ workflows:
           with open(path, "w") as f:
               f.write(data)
 
-          print("Swift Package reference removed from project.pbxproj")
+          print("Swift Package reference removed successfully")
           PY
 
       - name: Get Flutter dependencies
@@ -106,6 +100,10 @@ workflows:
         script: |
           cd ios
           pod install --repo-update
+
+      - name: Configure Code Signing
+        script: |
+          xcode-project use-profiles
 
       - name: Build iOS
         script: |
