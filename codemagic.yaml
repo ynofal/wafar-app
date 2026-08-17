@@ -13,7 +13,7 @@ workflows:
         script: |
           flutter config --no-enable-swift-package-manager
 
-      - name: Clean Flutter project
+      - name: Clean Flutter
         script: |
           flutter clean
 
