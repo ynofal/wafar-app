@@ -1,63 +1,83 @@
+```yaml
 workflows:
   ios-workflow:
-    name: Wafar iOS
+    name: iOS Workflow
+    max_build_duration: 120
     instance_type: mac_mini_m2
-
     environment:
-      flutter: 3.44.3
-      xcode: 16.4
-      cocoapods: default
-
       ios_signing:
         distribution_type: development
         bundle_identifier: com.wafar.user
+      vars:
+        XCODE_WORKSPACE: "Runner.xcworkspace"
+        XCODE_SCHEME: "Runner"
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
 
     scripts:
-
-      - name: Disable Flutter Swift Package Manager
+      - name: Set up code signing
         script: |
-          flutter config --no-enable-swift-package-manager
-          flutter config
+          keychain initialize
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_DEVELOPMENT \
+            --create
+          keychain add-certificates
+          xcode-project use-profiles
 
-      - name: Clean Swift Package Manager files
+      - name: Clean SPM and DerivedData caches
         script: |
-          rm -rf ios/.swiftpm
-          rm -rf ios/Pods
-          rm -rf ios/Podfile.lock
-          rm -rf ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/swiftpm
-          rm -rf ~/Library/Developer/Xcode/DerivedData/*
           rm -rf ~/Library/Caches/org.swift.swiftpm
           rm -rf ~/Library/org.swift.swiftpm
-          rm -rf ~/.cache/org.swift.swiftpm
+          rm -rf ~/Library/Developer/Xcode/DerivedData
+          rm -rf $CM_BUILD_DIR/ios/.symlinks
+          rm -rf $CM_BUILD_DIR/ios/Pods
+          rm -rf $CM_BUILD_DIR/ios/Podfile.lock
 
-      - name: Flutter clean
+      - name: Get Flutter packages
         script: |
-          flutter clean
-          flutter pub get
+          flutter packages pub get
 
       - name: Install CocoaPods dependencies
         script: |
+          find . -name "Podfile" -maxdepth 2 -execdir pod install \;
+
+      - name: Resolve Swift Package Manager dependencies with retry
+        script: |
           cd ios
-          pod deintegrate || true
-          pod install --repo-update
-          cd ..
+          xcodebuild -resolvePackageDependencies \
+            -workspace "$XCODE_WORKSPACE" \
+            -scheme "$XCODE_SCHEME" \
+          || (echo "First attempt failed, clearing cache and retrying..." \
+              && rm -rf ~/Library/Caches/org.swift.swiftpm \
+              && rm -rf ~/Library/org.swift.swiftpm \
+              && xcodebuild -resolvePackageDependencies \
+                   -workspace "$XCODE_WORKSPACE" \
+                   -scheme "$XCODE_SCHEME")
 
-      - name: Verify Swift Package Manager is disabled
+      - name: Flutter build ipa
         script: |
-          flutter config
-
-      - name: Build iOS IPA
-        script: |
-          flutter build ipa --debug
+          xcode-project use-profiles
+          flutter build ipa --release \
+            --export-options-plist=/Users/builder/export_options.plist
 
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
+      - flutter_drive.log
 
     publishing:
       email:
         recipients:
-          - mkn400@gmail.com
+          - your-email@example.com
         notify:
           success: true
           failure: true
+```
