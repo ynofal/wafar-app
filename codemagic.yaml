@@ -9,7 +9,46 @@ workflows:
       cocoapods: default
 
       ios_signing:
-        distribution_type: development
+        distribution_type: developmentscripts:
+  - name: Flutter clean and dependencies
+    script: |
+      flutter clean
+      flutter pub get
+
+  - name: Remove iOS generated files and SwiftPM state
+    script: |
+      cd ios
+
+      rm -rf Pods
+      rm -rf .symlinks
+      rm -rf Flutter/ephemeral
+
+      rm -rf Runner.xcworkspace
+      rm -rf Runner.xcodeproj/project.xcworkspace/xcshareddata/swiftpm
+
+      rm -rf ~/Library/Developer/Xcode/DerivedData/*
+      rm -rf ~/Library/Developer/Xcode/SourcePackages
+      rm -rf ~/Library/Caches/org.swift.swiftpm
+      rm -rf ~/Library/org.swift.swiftpm
+
+      cd ..
+
+  - name: Install CocoaPods
+    script: |
+      cd ios
+      pod deintegrate || true
+      pod install --repo-update
+      cd ..
+
+  - name: Build iOS
+    script: |
+      flutter build ipa \
+        --debug \
+        --export-options-plist=/Users/builder/export_options.plist
+
+artifacts:
+  - build/ios/ipa/*.ipa
+  - /tmp/xcodebuild_logs/*.log
         bundle_identifier: com.wafar.user
 
     scripts:
