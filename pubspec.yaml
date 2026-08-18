@@ -7,8 +7,10 @@ environment:
   sdk: ^3.10.0
 
 dependencies:
-  flutter:
-    sdk: flutter
+flutter:
+  sdk: flutter
+  config:
+    enable-swift-package-manager: false
 
   cupertino_icons: ^1.0.9
   device_info_plus: 11.5.0
