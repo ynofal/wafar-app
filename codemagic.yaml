@@ -5,81 +5,59 @@ workflows:
 
     environment:
       flutter: 3.44.3
-      xcode: 26.0
+      xcode: 16.4
       cocoapods: default
 
       ios_signing:
-        distribution_type: developmentscripts:
-  - name: Flutter clean and dependencies
-    script: |
-      flutter clean
-      flutter pub get
-
-  - name: Remove iOS generated files and SwiftPM state
-    script: |
-      cd ios
-
-      rm -rf Pods
-      rm -rf .symlinks
-      rm -rf Flutter/ephemeral
-
-      rm -rf Runner.xcworkspace
-      rm -rf Runner.xcodeproj/project.xcworkspace/xcshareddata/swiftpm
-
-      rm -rf ~/Library/Developer/Xcode/DerivedData/*
-      rm -rf ~/Library/Developer/Xcode/SourcePackages
-      rm -rf ~/Library/Caches/org.swift.swiftpm
-      rm -rf ~/Library/org.swift.swiftpm
-
-      cd ..
-
-  - name: Install CocoaPods
-    script: |
-      cd ios
-      pod deintegrate || true
-      pod install --repo-update
-      cd ..
-
-  - name: Build iOS
-    script: |
-      flutter build ipa \
-        --debug \
-        --export-options-plist=/Users/builder/export_options.plist
-
-artifacts:
-  - build/ios/ipa/*.ipa
-  - /tmp/xcodebuild_logs/*.log
+        distribution_type: development
         bundle_identifier: com.wafar.user
 
     scripts:
-      - name: Flutter clean and pub get
+
+      - name: Disable Flutter Swift Package Manager
+        script: |
+          flutter config --no-enable-swift-package-manager
+          flutter config
+
+      - name: Clean Swift Package Manager files
+        script: |
+          rm -rf ios/.swiftpm
+          rm -rf ios/Pods
+          rm -rf ios/Podfile.lock
+          rm -rf ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/swiftpm
+          rm -rf ~/Library/Developer/Xcode/DerivedData/*
+          rm -rf ~/Library/Caches/org.swift.swiftpm
+          rm -rf ~/Library/org.swift.swiftpm
+          rm -rf ~/.cache/org.swift.swiftpm
+
+      - name: Flutter clean
         script: |
           flutter clean
           flutter pub get
 
-      - name: Clean Xcode and Swift Package Manager caches
-        script: |
-          rm -rf ~/Library/Developer/Xcode/DerivedData/*
-          rm -rf ~/Library/Caches/org.swift.swiftpm
-          rm -rf ~/Library/org.swift.swiftpm
-          rm -rf ~/Library/Developer/Xcode/SourcePackages
-          rm -rf ios/Pods
-          rm -rf ios/.symlinks
-          rm -rf ios/Flutter/ephemeral
-
-      - name: Install CocoaPods
+      - name: Install CocoaPods dependencies
         script: |
           cd ios
           pod deintegrate || true
           pod install --repo-update
           cd ..
 
+      - name: Verify Swift Package Manager is disabled
+        script: |
+          flutter config
+
       - name: Build iOS IPA
         script: |
-          flutter build ipa \
-            --debug \
-            --export-options-plist=/Users/builder/export_options.plist
+          flutter build ipa --debug
 
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      email:
+        recipients:
+          - mkn400@gmail.com
+        notify:
+          success: true
+          failure: true
