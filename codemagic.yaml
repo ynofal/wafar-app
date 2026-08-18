@@ -11,16 +11,14 @@ workflows:
         XCODE_WORKSPACE: "Runner.xcworkspace"
         XCODE_SCHEME: "Runner"
       flutter: stable
-      xcode: latest
+      xcode: 26.4
       cocoapods: default
-
     triggering:
       events:
         - push
       branch_patterns:
         - pattern: main
           include: true
-
     scripts:
       - name: Set up code signing
         script: |
@@ -30,7 +28,6 @@ workflows:
             --create
           keychain add-certificates
           xcode-project use-profiles
-
       - name: Clean SPM and DerivedData caches
         script: |
           rm -rf ~/Library/Caches/org.swift.swiftpm
@@ -39,15 +36,12 @@ workflows:
           rm -rf $CM_BUILD_DIR/ios/.symlinks
           rm -rf $CM_BUILD_DIR/ios/Pods
           rm -rf $CM_BUILD_DIR/ios/Podfile.lock
-
       - name: Get Flutter packages
         script: |
           flutter packages pub get
-
       - name: Install CocoaPods dependencies
         script: |
           find . -name "Podfile" -maxdepth 2 -execdir pod install \;
-
       - name: Resolve Swift Package Manager dependencies with retry
         script: |
           cd ios
@@ -60,11 +54,9 @@ workflows:
               && xcodebuild -resolvePackageDependencies \
                    -workspace "$XCODE_WORKSPACE" \
                    -scheme "$XCODE_SCHEME")
-
       - name: Flutter build ipa (with retry for Xcode SPM crash)
         script: |
           xcode-project use-profiles
-
           MAX_ATTEMPTS=3
           ATTEMPT=1
           until flutter build ipa --release \
@@ -82,17 +74,14 @@ workflows:
             ATTEMPT=$((ATTEMPT+1))
             xcode-project use-profiles
           done
-
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
       - flutter_drive.log
-
     publishing:
       app_store_connect:
         auth: integration
         submit_to_testflight: true
-
       email:
         recipients:
           - your-email@example.com
