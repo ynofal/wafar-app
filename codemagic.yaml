@@ -5,75 +5,42 @@ workflows:
 
     environment:
       flutter: 3.44.3
-      xcode: 16.4
+      xcode: 26.0
       cocoapods: default
+
       ios_signing:
-        distribution_type: app_store
+        distribution_type: development
         bundle_identifier: com.wafar.user
 
     scripts:
-      - name: Disable Swift Package Manager
+      - name: Flutter clean and pub get
         script: |
-          echo "=== DISABLING SWIFT PACKAGE MANAGER ==="
-          flutter config --no-enable-swift-package-manager
-
-      - name: Clean Flutter and iOS
-        script: |
-          echo "=== CLEANING FLUTTER AND IOS ==="
-
           flutter clean
-
-          rm -rf "$CM_BUILD_DIR/ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/swiftpm"
-          rm -rf "$CM_BUILD_DIR/ios/Runner.xcworkspace/xcshareddata/swiftpm"
-          rm -rf "$CM_BUILD_DIR/ios/.symlinks"
-
-          rm -rf "$HOME/Library/Developer/Xcode/DerivedData"
-          rm -rf "$HOME/Library/Developer/Xcode/SourcePackages"
-          rm -rf "$HOME/Library/Caches/org.swift.swiftpm"
-
-      - name: Get Flutter dependencies
-        script: |
-          echo "=== FLUTTER PUB GET ==="
           flutter pub get
+
+      - name: Clean Xcode and Swift Package Manager caches
+        script: |
+          rm -rf ~/Library/Developer/Xcode/DerivedData/*
+          rm -rf ~/Library/Caches/org.swift.swiftpm
+          rm -rf ~/Library/org.swift.swiftpm
+          rm -rf ~/Library/Developer/Xcode/SourcePackages
+          rm -rf ios/Pods
+          rm -rf ios/.symlinks
+          rm -rf ios/Flutter/ephemeral
 
       - name: Install CocoaPods
         script: |
-          echo "=== INSTALLING COCOAPODS ==="
-
           cd ios
-
           pod deintegrate || true
-          rm -rf Pods
-          rm -f Podfile.lock
-
           pod install --repo-update
+          cd ..
 
-      - name: Final Swift Package Manager cleanup
+      - name: Build iOS IPA
         script: |
-          echo "=== FINAL SPM CLEANUP ==="
-
-          rm -rf "$CM_BUILD_DIR/ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/swiftpm"
-          rm -rf "$CM_BUILD_DIR/ios/Runner.xcworkspace/xcshareddata/swiftpm"
-
-          rm -rf "$HOME/Library/Developer/Xcode/DerivedData"
-          rm -rf "$HOME/Library/Developer/Xcode/SourcePackages"
-          rm -rf "$HOME/Library/Caches/org.swift.swiftpm"
-
-      - name: Build iOS
-        script: |
-          echo "=== BUILDING WAFAR IOS ==="
-
           flutter build ipa \
             --debug \
             --export-options-plist=/Users/builder/export_options.plist
 
     artifacts:
       - build/ios/ipa/*.ipa
-
-    publishing:
-      email:
-        recipients:
-          - mkn400@gmail.com
-        notify:
-          success: true
-          failure: true
+      - /tmp/xcodebuild_logs/*.log
