@@ -13,49 +13,64 @@ workflows:
 
     scripts:
 
-      - name: Clean old Swift Package Manager data
+      - name: Disable Swift Package Manager
         script: |
-          echo "=== CLEANING OLD SPM DATA ==="
+          echo "=== DISABLING SWIFT PACKAGE MANAGER ==="
+          flutter config --no-enable-swift-package-manager
+          flutter config
+
+      - name: Clean Flutter and iOS
+        script: |
+          echo "=== CLEANING FLUTTER AND IOS ==="
+
+          flutter clean
+
+          rm -rf "$CM_BUILD_DIR/ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/swiftpm"
+          rm -rf "$CM_BUILD_DIR/ios/Runner.xcworkspace/xcshareddata/swiftpm"
+          rm -rf "$CM_BUILD_DIR/ios/.symlinks"
+
+          rm -rf "$HOME/Library/Developer/Xcode/DerivedData"
+          rm -rf "$HOME/Library/Developer/Xcode/SourcePackages"
+          rm -rf "$HOME/Library/Caches/org.swift.swiftpm"
+
+      - name: Get Flutter dependencies
+        script: |
+          echo "=== FLUTTER PUB GET ==="
+          flutter pub get
+
+      - name: Install CocoaPods
+        script: |
+          echo "=== INSTALLING COCOAPODS ==="
+
+          cd ios
+
+          pod deintegrate || true
+          rm -rf Pods
+          rm -f Podfile.lock
+
+          pod install --repo-update
+
+      - name: Final Swift Package Manager cleanup
+        script: |
+          echo "=== FINAL SPM CLEANUP ==="
 
           rm -rf "$CM_BUILD_DIR/ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/swiftpm"
           rm -rf "$CM_BUILD_DIR/ios/Runner.xcworkspace/xcshareddata/swiftpm"
 
           rm -rf "$HOME/Library/Developer/Xcode/DerivedData"
-          rm -rf "$HOME/Library/Caches/org.swift.swiftpm"
           rm -rf "$HOME/Library/Developer/Xcode/SourcePackages"
-
-          echo "SPM cache cleaned."
-
-      - name: Flutter clean
-        script: |
-          flutter clean
-
-      - name: Flutter pub get
-        script: |
-          flutter pub get
-
-      - name: Install CocoaPods
-        script: |
-          cd ios
-          pod deintegrate || true
-          rm -rf Pods
-          rm -f Podfile.lock
-          pod install --repo-update
-
-      - name: Clean Xcode build data
-        script: |
-          rm -rf "$HOME/Library/Developer/Xcode/DerivedData"
-          rm -rf "$HOME/Library/Developer/Xcode/Archives"
+          rm -rf "$HOME/Library/Caches/org.swift.swiftpm"
 
       - name: Build iOS
         script: |
+          echo "=== BUILDING WAFAR IOS ==="
+
           flutter build ipa \
             --debug \
             --export-options-plist=/Users/builder/export_options.plist
 
     artifacts:
       - build/ios/ipa/*.ipa
-      - /tmp/xcodebuild_logs/*.log
 
     publishing:
       email:
