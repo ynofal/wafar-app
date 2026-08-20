@@ -18,128 +18,18 @@ workflows:
         script: |
           flutter clean
 
-      - name: Remove iOS generated files
+      - name: Remove old iOS generated data
         script: |
           rm -rf ios/.symlinks
           rm -rf ios/Pods
           rm -rf ios/Podfile.lock
 
-      - name: Remove all Xcode Swift Package Manager data
+      - name: Remove old Swift Package Manager data
         script: |
           find ios -name "Package.resolved" -type f -delete
-          find ios -type d -name "swiftpm" -prune -exec rm -rf {} +
           rm -rf ~/Library/Developer/Xcode/DerivedData
           rm -rf ~/Library/Caches/org.swift.swiftpm
           rm -rf ~/Library/org.swift.swiftpm
-
-      - name: Remove manual SPM from Xcode project
-        script: |
-          python3 <<'PY'
-          from pathlib import Path
-          import re
-
-          pbx = Path("ios/Runner.xcodeproj/project.pbxproj")
-
-          if not pbx.exists():
-              raise SystemExit("ERROR: project.pbxproj not found")
-
-          text = pbx.read_text()
-
-          print("======================================")
-          print("REMOVING MANUAL SPM FROM XCODE PROJECT")
-          print("======================================")
-
-          # Collect IDs belonging to manually added Swift packages.
-          package_ids = set()
-
-          sections = [
-              "XCSwiftPackageProductDependency",
-              "XCRemoteSwiftPackageReference",
-          ]
-
-          for section in sections:
-              pattern = (
-                  r"/\* Begin " + re.escape(section) +
-                  r" section \*/.*?/\* End " + re.escape(section) +
-                  r" section \*/"
-              )
-
-              matches = re.findall(pattern, text, flags=re.S)
-
-              for block in matches:
-                  ids = re.findall(
-                      r"^\s*([A-F0-9]{24})\s*/\*",
-                      block,
-                      flags=re.M
-                  )
-                  package_ids.update(ids)
-
-              text = re.sub(
-                  pattern,
-                  "",
-                  text,
-                  flags=re.S
-              )
-
-          print(f"Found manual SPM IDs: {len(package_ids)}")
-
-          # Remove every reference to those package IDs.
-          if package_ids:
-              lines = text.splitlines()
-              new_lines = []
-
-              for line in lines:
-                  if any(pid in line for pid in package_ids):
-                      print("Removing:", line.strip())
-                      continue
-                  new_lines.append(line)
-
-              text = "\n".join(new_lines) + "\n"
-
-          # Remove the project-level packageReferences property.
-          text = re.sub(
-              r"\n\s*packageReferences\s*=\s*\(\s*\n.*?\n\s*\);\s*",
-              "\n",
-              text,
-              flags=re.S
-          )
-
-          # Remove empty packageProductDependencies properties.
-          text = re.sub(
-              r"\n\s*packageProductDependencies\s*=\s*\(\s*\n\s*\);\s*",
-              "\n",
-              text
-          )
-
-          pbx.write_text(text)
-
-          print("======================================")
-          print("MANUAL SPM CLEANUP FINISHED")
-          print("======================================")
-          PY
-
-      - name: Verify project is free of manual SPM
-        script: |
-          echo "======================================"
-          echo "FINAL SPM CHECK"
-          echo "======================================"
-
-          if grep -n "XCSwiftPackageProductDependency" ios/Runner.xcodeproj/project.pbxproj; then
-            echo "ERROR: XCSwiftPackageProductDependency still exists"
-            exit 1
-          fi
-
-          if grep -n "XCRemoteSwiftPackageReference" ios/Runner.xcodeproj/project.pbxproj; then
-            echo "ERROR: XCRemoteSwiftPackageReference still exists"
-            exit 1
-          fi
-
-          if grep -n "packageReferences =" ios/Runner.xcodeproj/project.pbxproj; then
-            echo "ERROR: packageReferences still exists"
-            exit 1
-          fi
-
-          echo "SUCCESS: No manual Swift Package Manager entries found"
 
       - name: Get Flutter dependencies
         script: |
