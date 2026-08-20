@@ -23,105 +23,99 @@ workflows:
           rm -rf ios/.symlinks
           rm -rf ios/Pods
           rm -rf ios/Podfile.lock
-          rm -rf ios/Flutter/ephemeral
 
-      - name: Remove all Swift Package Manager files
+      - name: Remove all Xcode Swift Package Manager data
         script: |
-          echo "=== Removing SPM files ==="
+          find ios -name "Package.resolved" -type f -delete
+          find ios -type d -name "swiftpm" -prune -exec rm -rf {} +
+          rm -rf ~/Library/Developer/Xcode/DerivedData
+          rm -rf ~/Library/Caches/org.swift.swiftpm
+          rm -rf ~/Library/org.swift.swiftpm
 
-          find ios -name "Package.resolved" -type f -print -delete
-          find ios -type d -name "swiftpm" -print -prune -exec rm -rf {} +
-          find ios -type d -name "SourcePackages" -print -prune -exec rm -rf {} +
-
-          echo "=== SPM files removed ==="
-
-      - name: Inspect Xcode project for SPM
-        script: |
-          echo "======================================"
-          echo "SEARCHING PROJECT FOR SPM REFERENCES"
-          echo "======================================"
-
-          echo "--- XCRemoteSwiftPackageReference ---"
-          grep -Rni "XCRemoteSwiftPackageReference" ios || true
-
-          echo "--- XCSwiftPackageProductDependency ---"
-          grep -Rni "XCSwiftPackageProductDependency" ios || true
-
-          echo "--- packageReferences ---"
-          grep -Rni "packageReferences" ios || true
-
-          echo "--- packageProductDependencies ---"
-          grep -Rni "packageProductDependencies" ios || true
-
-          echo "--- Package.swift ---"
-          find ios -name "Package.swift" -print || true
-
-          echo "--- Package.resolved ---"
-          find ios -name "Package.resolved" -print || true
-
-      - name: Remove manual SPM references from Xcode project
+      - name: Remove manual SPM from Xcode project
         script: |
           python3 <<'PY'
           from pathlib import Path
+          import re
 
           pbx = Path("ios/Runner.xcodeproj/project.pbxproj")
 
           if not pbx.exists():
-              print("ERROR: ios/Runner.xcodeproj/project.pbxproj does not exist")
-              raise SystemExit(1)
+              raise SystemExit("ERROR: project.pbxproj not found")
 
           text = pbx.read_text()
 
-          print("Original project size:", len(text))
+          print("======================================")
+          print("REMOVING MANUAL SPM FROM XCODE PROJECT")
+          print("======================================")
 
-          # Remove the complete XCRemoteSwiftPackageReference section.
-          markers = [
-              "XCRemoteSwiftPackageReference",
+          # Collect IDs belonging to manually added Swift packages.
+          package_ids = set()
+
+          sections = [
               "XCSwiftPackageProductDependency",
+              "XCRemoteSwiftPackageReference",
           ]
 
-          for marker in markers:
-              if marker in text:
-                  print("FOUND:", marker)
-              else:
-                  print("NOT FOUND:", marker)
+          for section in sections:
+              pattern = (
+                  r"/\* Begin " + re.escape(section) +
+                  r" section \*/.*?/\* End " + re.escape(section) +
+                  r" section \*/"
+              )
 
-          # Remove packageReferences arrays.
-          lines = text.splitlines(True)
-          output = []
-          skip = False
-          depth = 0
+              matches = re.findall(pattern, text, flags=re.S)
 
-          for line in lines:
-              stripped = line.strip()
+              for block in matches:
+                  ids = re.findall(
+                      r"^\s*([A-F0-9]{24})\s*/\*",
+                      block,
+                      flags=re.M
+                  )
+                  package_ids.update(ids)
 
-              if not skip and stripped.startswith("packageReferences = ("):
-                  print("Removing packageReferences block")
-                  skip = True
-                  depth = 1
-                  continue
+              text = re.sub(
+                  pattern,
+                  "",
+                  text,
+                  flags=re.S
+              )
 
-              if not skip and stripped.startswith("packageProductDependencies = ("):
-                  print("Removing packageProductDependencies block")
-                  skip = True
-                  depth = 1
-                  continue
+          print(f"Found manual SPM IDs: {len(package_ids)}")
 
-              if skip:
-                  depth += line.count("(")
-                  depth -= line.count(")")
-                  if depth <= 0:
-                      skip = False
-                  continue
+          # Remove every reference to those package IDs.
+          if package_ids:
+              lines = text.splitlines()
+              new_lines = []
 
-              output.append(line)
+              for line in lines:
+                  if any(pid in line for pid in package_ids):
+                      print("Removing:", line.strip())
+                      continue
+                  new_lines.append(line)
 
-          text = "".join(output)
+              text = "\n".join(new_lines) + "\n"
+
+          # Remove the project-level packageReferences property.
+          text = re.sub(
+              r"\n\s*packageReferences\s*=\s*\(\s*\n.*?\n\s*\);\s*",
+              "\n",
+              text,
+              flags=re.S
+          )
+
+          # Remove empty packageProductDependencies properties.
+          text = re.sub(
+              r"\n\s*packageProductDependencies\s*=\s*\(\s*\n\s*\);\s*",
+              "\n",
+              text
+          )
 
           pbx.write_text(text)
 
-          print("Final project size:", len(text))
-          print("Project cleanup completed.")
+          print("======================================")
+          print("MANUAL SPM CLEANUP FINISHED")
+          print("======================================")
           PY
 
       - name: Verify project is free of manual SPM
@@ -130,17 +124,22 @@ workflows:
           echo "FINAL SPM CHECK"
           echo "======================================"
 
-          if grep -Rni "XCRemoteSwiftPackageReference" ios/Runner.xcodeproj; then
-            echo "ERROR: XCRemoteSwiftPackageReference still exists"
-            exit 1
-          fi
-
-          if grep -Rni "XCSwiftPackageProductDependency" ios/Runner.xcodeproj; then
+          if grep -n "XCSwiftPackageProductDependency" ios/Runner.xcodeproj/project.pbxproj; then
             echo "ERROR: XCSwiftPackageProductDependency still exists"
             exit 1
           fi
 
-          echo "SUCCESS: No manual SPM references found in Runner.xcodeproj"
+          if grep -n "XCRemoteSwiftPackageReference" ios/Runner.xcodeproj/project.pbxproj; then
+            echo "ERROR: XCRemoteSwiftPackageReference still exists"
+            exit 1
+          fi
+
+          if grep -n "packageReferences =" ios/Runner.xcodeproj/project.pbxproj; then
+            echo "ERROR: packageReferences still exists"
+            exit 1
+          fi
+
+          echo "SUCCESS: No manual Swift Package Manager entries found"
 
       - name: Get Flutter dependencies
         script: |
