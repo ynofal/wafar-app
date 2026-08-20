@@ -37,6 +37,16 @@ workflows:
       - name: Set up code signing
         script: |
           xcode-project use-profiles
+      - name: Resolve Swift Package Manager dependencies separately
+        script: |
+          cd ios
+          for i in 1 2 3; do
+            xcodebuild -resolvePackageDependencies \
+              -project Runner.xcodeproj \
+              -scheme Runner && break
+            echo "Attempt $i failed, retrying..."
+            sleep 5
+          done
       - name: Build iOS
         script: |
           flutter build ipa --release --export-options-plist /Users/builder/export_options.plist
