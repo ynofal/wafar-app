@@ -5,7 +5,7 @@ workflows:
 
     environment:
       flutter: 3.44.3
-      xcode: 26.4
+      xcode: 26.0
       cocoapods: 1.16.2
 
     scripts:
@@ -26,14 +26,78 @@ workflows:
 
       - name: Remove Xcode Swift Package Manager files
         script: |
-          find ios -name "Package.resolved" -print -delete
-          find ios -type d -name "swiftpm" -print -exec rm -rf {} +
+          find ios -name "Package.resolved" -type f -delete
+          find ios -type d -name "swiftpm" -prune -exec rm -rf {} +
+          find ios -type d -name "SourcePackages" -prune -exec rm -rf {} +
 
-      - name: Remove Xcode Swift Package Manager caches
+      - name: Remove Xcode Swift Package Manager references
         script: |
-          rm -rf ~/Library/Developer/Xcode/DerivedData/*
-          rm -rf ~/Library/Caches/org.swift.swiftpm
-          rm -rf ~/Library/org.swift.swiftpm
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+
+          pbx = Path("ios/Runner.xcodeproj/project.pbxproj")
+
+          if not pbx.exists():
+              print("ERROR: project.pbxproj not found")
+              raise SystemExit(1)
+
+          text = pbx.read_text()
+
+          print("Checking Runner.xcodeproj for manual Swift Package Manager references...")
+
+          # Remove XCRemoteSwiftPackageReference objects
+          text = re.sub(
+              r'^[ \t]*[A-F0-9]{24} /\*.*?\*/ = \{isa = XCRemoteSwiftPackageReference;.*?^[ \t]*\};\n',
+              '',
+              text,
+              flags=re.MULTILINE | re.DOTALL
+          )
+
+          # Remove XCSwiftPackageProductDependency objects
+          text = re.sub(
+              r'^[ \t]*[A-F0-9]{24} /\*.*?\*/ = \{isa = XCSwiftPackageProductDependency;.*?^[ \t]*\};\n',
+              '',
+              text,
+              flags=re.MULTILINE | re.DOTALL
+          )
+
+          # Remove packageReferences sections
+          text = re.sub(
+              r'[ \t]*packageReferences = \(\n.*?\n[ \t]*\);',
+              '',
+              text,
+              flags=re.DOTALL
+          )
+
+          # Remove packageProductDependencies sections
+          text = re.sub(
+              r'[ \t]*packageProductDependencies = \(\n.*?\n[ \t]*\);',
+              '',
+              text,
+              flags=re.DOTALL
+          )
+
+          pbx.write_text(text)
+
+          print("Manual Swift Package Manager references removed.")
+          PY
+
+      - name: Verify Swift Package Manager references
+        script: |
+          echo "Checking for remaining SPM references..."
+
+          if grep -q "XCRemoteSwiftPackageReference" ios/Runner.xcodeproj/project.pbxproj; then
+            echo "ERROR: XCRemoteSwiftPackageReference still exists."
+            exit 1
+          fi
+
+          if grep -q "XCSwiftPackageProductDependency" ios/Runner.xcodeproj/project.pbxproj; then
+            echo "ERROR: XCSwiftPackageProductDependency still exists."
+            exit 1
+          fi
+
+          echo "No manual Swift Package Manager references found."
 
       - name: Get Flutter dependencies
         script: |
@@ -43,7 +107,6 @@ workflows:
         script: |
           cd ios
           pod install --repo-update
-          cd ..
 
       - name: Set up code signing
         script: |
@@ -51,15 +114,9 @@ workflows:
 
       - name: Build iOS
         script: |
-          flutter build ipa --release --export-options-plist=/Users/builder/export_options.plist
+          flutter build ipa \
+            --release \
+            --export-options-plist /Users/builder/export_options.plist
 
     artifacts:
       - build/ios/ipa/*.ipa
-
-    publishing:
-      email:
-        recipients:
-          - mkn400@gmail.com
-        notify:
-          success: true
-          failure: true
