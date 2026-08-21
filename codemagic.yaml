@@ -7,6 +7,8 @@ workflows:
       flutter: 3.44.7
       xcode: 26.0
       cocoapods: 1.16.2
+      # اربط الـ App Store Connect API Key هنا لو مش متعرّف في المتغيرات
+      # 
 
     scripts:
 
@@ -42,7 +44,8 @@ workflows:
 
       - name: Set up code signing
         script: |
-          xcode-project use-profiles
+          # السطر ده بيخلي كودماجيك ينشئ البروفايل ويعمل التوقيع أوتوماتيك باستخدام الـ API Key اللي في إعدادات التطبيق
+          app-store-connect fetch-signing-files com.wafar.user
 
       - name: Build iOS
         script: |
