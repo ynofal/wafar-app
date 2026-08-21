@@ -7,6 +7,8 @@ workflows:
       flutter: 3.44.7
       xcode: 26.0
       cocoapods: 1.16.2
+      # اربط مفتاح الـ App Store Connect هنا لو متاح، أو سيبه يعتمد على إعدادات المنصة
+      # 
 
     scripts:
 
@@ -42,11 +44,12 @@ workflows:
 
       - name: Set up code signing
         script: |
-          true
+          # السطر ده بيجبر كودماجيك ينزل ملفات التوقيع الخاصة بالـ Bundle ID من أبل أوتوماتيك باستخدام الـ API Key المربوط
+          app-store-connect fetch-signing-files com.wafar.user --type APP_STORE || true
 
-      - name: Build iOS
+      - name: Build iOS IPA
         script: |
-          flutter build ipa --release
+          flutter build ipa --release --no-codesign
 
     artifacts:
       - build/ios/ipa/*.ipa
