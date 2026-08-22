@@ -3,6 +3,9 @@ workflows:
     name: Wafar iOS
     instance_type: mac_mini_m2
 
+    integrations:
+      app_store_connect: Wafar Codemagic
+
     environment:
       flutter: 3.44.3
       xcode: 16.1
@@ -42,7 +45,7 @@ workflows:
           cat << 'EOF' > ios/Runner/GoogleService-Info.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
+          <plist version="1.0.0">
           <dict>
               <key>CLIENT_ID</key>
               <string>dummy_client_id</string>
