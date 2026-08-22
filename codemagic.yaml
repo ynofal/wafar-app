@@ -7,8 +7,6 @@ workflows:
       flutter: 3.44.7
       xcode: latest
       cocoapods: 1.16.2
-      # اربط مفتاح الـ App Store Connect هنا لو متاح، أو سيبه يعتمد على إعدادات المنصة
-      # 
 
     scripts:
 
@@ -33,6 +31,14 @@ workflows:
           rm -rf ~/Library/Caches/org.swift.swiftpm
           rm -rf ~/Library/org.swift.swiftpm
 
+      - name: Verify or Handle GoogleService-Info.plist
+        script: |
+          if [ ! -f "ios/Runner/GoogleService-Info.plist" ]; then
+            echo "Warning: GoogleService-Info.plist not found in repository path!"
+          else
+            echo "GoogleService-Info.plist is securely in place."
+          fi
+
       - name: Get Flutter dependencies
         script: |
           flutter pub get
@@ -44,7 +50,6 @@ workflows:
 
       - name: Set up code signing
         script: |
-          # السطر ده بيجبر كودماجيك ينزل ملفات التوقيع الخاصة بالـ Bundle ID من أبل أوتوماتيك باستخدام الـ API Key المربوط
           app-store-connect fetch-signing-files com.wafar.user --type APP_STORE || true
 
       - name: Build iOS IPA
