@@ -14,26 +14,56 @@ workflows:
 
     scripts:
 
-      - name: Disable Swift Package Manager
+      - name: Completely Disable Swift Package Manager
         script: |
           flutter config --no-enable-swift-package-manager
+
+          rm -rf ios/Runner.xcworkspace
+          rm -rf ios/Pods
+          rm -rf ios/Podfile.lock
+
+          find ios -name "Package.resolved" -type f -delete
+          find ios -name "*.xcscmblueprint" -type f -delete
+
+          rm -rf ~/Library/Developer/Xcode/DerivedData/*
+          rm -rf ~/Library/Caches/org.swift.swiftpm/*
+          rm -rf ~/Library/org.swift.swiftpm/*
+          rm -rf ~/Library/Developer/Xcode/SourcePackages/*
+
+      - name: Remove Swift Package References from Xcode Project
+        script: |
+          python3 <<'PY'
+          import re
+          from pathlib import Path
+
+          path = Path("ios/Runner.xcodeproj/project.pbxproj")
+
+          if path.exists():
+              text = path.read_text(encoding="utf-8")
+
+              text = re.sub(
+                  r'/\* Begin XCRemoteSwiftPackageReference section \*/.*?/\* End XCRemoteSwiftPackageReference section \*/',
+                  '',
+                  text,
+                  flags=re.DOTALL
+              )
+
+              text = re.sub(
+                  r'/\* Begin XCSwiftPackageProductDependency section \*/.*?/\* End XCSwiftPackageProductDependency section \*/',
+                  '',
+                  text,
+                  flags=re.DOTALL
+              )
+
+              path.write_text(text, encoding="utf-8")
+
+              print("Swift Package references removed from project.pbxproj")
+          else:
+              print("project.pbxproj not found")
 
       - name: Clean Flutter
         script: |
           flutter clean
-
-      - name: Remove old iOS generated data
-        script: |
-          rm -rf ios/.symlinks
-          rm -rf ios/Pods
-          rm -rf ios/Podfile.lock
-
-      - name: Remove old Swift Package Manager data
-        script: |
-          find ios -name "Package.resolved" -type f -delete
-          rm -rf ~/Library/Developer/Xcode/DerivedData
-          rm -rf ~/Library/Caches/org.swift.swiftpm
-          rm -rf ~/Library/org.swift.swiftpm
 
       - name: Generate GoogleService-Info.plist
         script: |
@@ -44,30 +74,43 @@ workflows:
           <dict>
               <key>CLIENT_ID</key>
               <string>dummy_client_id</string>
+
               <key>REVERSED_CLIENT_ID</key>
               <string>dummy_reversed_client_id</string>
+
               <key>API_KEY</key>
               <string>dummy_api_key</string>
+
               <key>GCM_SENDER_ID</key>
               <string>dummy_gcm_sender_id</string>
+
               <key>PLIST_VERSION</key>
               <string>1</string>
+
               <key>BUNDLE_ID</key>
               <string>com.wafar.user</string>
+
               <key>PROJECT_ID</key>
               <string>wafar-app</string>
+
               <key>STORAGE_BUCKET</key>
               <string>wafar-app.appspot.com</string>
+
               <key>IS_ADS_ENABLED</key>
               <false/>
+
               <key>IS_ANALYTICS_ENABLED</key>
               <false/>
+
               <key>IS_APPINVITE_ENABLED</key>
               <true/>
+
               <key>IS_GCM_ENABLED</key>
               <true/>
+
               <key>IS_SIGNIN_ENABLED</key>
               <true/>
+
               <key>GOOGLE_APP_ID</key>
               <string>dummy_google_app_id</string>
           </dict>
@@ -77,12 +120,6 @@ workflows:
       - name: Get Flutter dependencies
         script: |
           flutter pub get
-
-      - name: Set App Name and Build Number
-        script: |
-          /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName وفّر" ios/Runner/Info.plist
-          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 1.0.0" ios/Runner/Info.plist
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 2" ios/Runner/Info.plist
 
       - name: Install CocoaPods
         script: |
