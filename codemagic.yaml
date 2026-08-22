@@ -1,59 +1,33 @@
-workflows:
-  ios-workflow:
-    name: Wafar iOS
-    instance_type: mac_mini_m2
-
-    environment:
-      flutter: 3.44.7
-      xcode: latest
-      cocoapods: 1.16.2
-      groups:
-        - ios-workflow   # مجموعة المتغيرات المربطوة في كودماجيك
-
-    scripts:
-
-      - name: Disable Swift Package Manager
+- name: Generate GoogleService-Info.plist
         script: |
-          flutter config --no-enable-swift-package-manager
-
-      - name: Clean Flutter
-        script: |
-          flutter clean
-
-      - name: Remove old iOS generated data
-        script: |
-          rm -rf ios/.symlinks
-          rm -rf ios/Pods
-          rm -rf ios/Podfile.lock
-
-      - name: Remove old Swift Package Manager data
-        script: |
-          find ios -name "Package.resolved" -type f -delete
-          rm -rf ~/Library/Developer/Xcode/DerivedData
-          rm -rf ~/Library/Caches/org.swift.swiftpm
-          rm -rf ~/Library/org.swift.swiftpm
-
-      - name: Set up GoogleService-Info.plist
-        script: |
-          echo $GOOGLE_SERVICE_INFO_PLIST | base64 --decode > ios/Runner/GoogleService-Info.plist
+          cat << 'EOF' > ios/Runner/GoogleService-Info.plist
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CLIENT_ID</key>
+              <string>حط الكلاينت آي دي بتاعك هنا</string>
+              <key>REVERSED_CLIENT_ID</key>
+              <string>حط الريفيرست هنا</string>
+              <key>API_KEY</key>
+              <string>حط الآبي كي هنا</string>
+              <key>GCM_SENDER_ID</key>
+              <string>حط رقم المرسل هنا</string>
+              <key>PLIST_VERSION</key>
+              <string>1</string>
+              <key>BUNDLE_ID</key>
+              <string>com.wafar.user</string>
+              <key>PROJECT_ID</key>
+              <string>اسم المشروع في فايربيس</string>
+              <key>STORAGE_BUCKET</key>
+              <string>bucket.appspot.com</string>
+              <key>DATABASE_URL</key>
+              <string>https://database.firebaseio.com</string>
+              <key>SENDER_ID</key>
+              <string>رقم المرسل</string>
+              <key>APP_ID</key>
+              <string>رقم التطبيق</string>
+          </dict>
+          </plist>
+          EOF
           cp ios/Runner/GoogleService-Info.plist ios/GoogleService-Info.plist
-
-      - name: Get Flutter dependencies
-        script: |
-          flutter pub get
-
-      - name: Install CocoaPods
-        script: |
-          cd ios
-          pod install --repo-update
-
-      - name: Set up code signing
-        script: |
-          app-store-connect fetch-signing-files com.wafar.user --type APP_STORE || true
-
-      - name: Build iOS IPA
-        script: |
-          flutter build ipa --release --no-codesign
-
-    artifacts:
-      - build/ios/ipa/*.ipa
