@@ -31,27 +31,39 @@ workflows:
           rm -rf ~/Library/Caches/org.swift.swiftpm/*
           rm -rf ~/Library/org.swift.swiftpm/*
 
-      - name: Forcefully strip all SPM references from project file
+      - name: Purge all package references and workspace data from Xcode project
         script: |
           python3 <<'PY'
+          import os
           from pathlib import Path
-          import re
+          import shutil
 
-          pbx = Path("ios/Runner.xcodeproj/project.pbxproj")
-          if pbx.exists():
-              text = pbx.read_text()
+          # حذف مجلدات الـ workspace القديمة اللي بتخزن الكاش التالف
+          xcworkspace = Path("ios/Runner.xcworkspace")
+          if xcworkspace.exists():
+              swiftpm_data = xcworkspace / "xcuserdata"
+              if swiftpm_data.exists():
+                  shutil.rmtree(swiftpm_data)
+
+          pbxproj_path = Path("ios/Runner.xcodeproj/project.pbxproj")
+          if pbxproj_path.exists():
+              content = pbxproj_path.read_text(encoding="utf-8")
               
-              # إزالة كافة أجزاء وكتل الـ SPM من الملف
-              text = re.sub(r'/\* Begin XCSwiftPackageProductDependency section \*/.*?/\* End XCSwiftPackageProductDependency section \*/', '', text, flags=re.S)
-              text = re.sub(r'/\* Begin XCRemoteSwiftPackageReference section \*/.*?/\* End XCRemoteSwiftPackageReference section \*/', '', text, flags=re.S)
-              text = re.sub(r'/\* Begin PBXBuildFile section \*/(.*?)/\* End PBXBuildFile section \*/', lambda m: re.sub(r'.*SwiftPackage.*?\n', '', m.group(0)), text, flags=re.S)
-              
-              # تنظيف مراجع الـ packages داخل الـ project
-              text = re.sub(r'\n\s*packageReferences\s*=\s*\(\s*\n.*?\n\s*\);\s*', '\n', text, flags=re.S)
-              text = re.sub(r'\n\s*packageProductDependencies\s*=\s*\(\s*\n.*?\n\s*\);\s*', '\n', text, flags=re.S)
-              
-              pbx.write_text(text)
-              print("Successfully purged all SPM references from project.pbxproj")
+              # تنظيف الأسطر والملفات المرتبطة بالـ Swift Packages اليدوية من ملف المشروع
+              lines = content.splitlines()
+              new_lines = []
+              skip = False
+              for line in lines:
+                  if "XCSwiftPackageProductDependency" in line or "XCRemoteSwiftPackageReference" in line:
+                      skip = True
+                  if skip and "/\* End" in line:
+                      skip = False
+                      continue
+                  if not skip and "SwiftPackage" not in line:
+                      new_lines.append(line)
+                      
+              pbxproj_path.write_text("\n".join(new_lines), encoding="utf-8")
+              print("Successfully sanitized project.pbxproj from SPM references.")
           PY
 
       - name: Get Flutter dependencies
