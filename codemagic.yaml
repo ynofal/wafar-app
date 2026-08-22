@@ -3,8 +3,6 @@ workflows:
     name: Wafar iOS
     max_build_duration: 120
     instance_type: mac_mini_m2
-    integrations:
-      app_store_connect: Wafar Codemagic
     environment:
       flutter: "3.44.3"
       xcode: latest
@@ -23,10 +21,6 @@ workflows:
           app-store-connect fetch-signing-files "$BUNDLE_ID" --type APP_STORE
       - name: Build ipa for App Store
         script: |
-          flutter build ipa --release
+          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
     artifacts:
       - build/ios/ipa/*.ipa
-    publishing:
-      app_store_connect:
-        auth: integration
-        submit_to_testflight: true
