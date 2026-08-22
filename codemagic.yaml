@@ -38,7 +38,6 @@ workflows:
           from pathlib import Path
           import shutil
 
-          # حذف مجلدات الـ workspace القديمة اللي بتخزن الكاش التالف
           xcworkspace = Path("ios/Runner.xcworkspace")
           if xcworkspace.exists():
               swiftpm_data = xcworkspace / "xcuserdata"
@@ -48,15 +47,13 @@ workflows:
           pbxproj_path = Path("ios/Runner.xcodeproj/project.pbxproj")
           if pbxproj_path.exists():
               content = pbxproj_path.read_text(encoding="utf-8")
-              
-              # تنظيف الأسطر والملفات المرتبطة بالـ Swift Packages اليدوية من ملف المشروع
               lines = content.splitlines()
               new_lines = []
               skip = False
               for line in lines:
                   if "XCSwiftPackageProductDependency" in line or "XCRemoteSwiftPackageReference" in line:
                       skip = True
-                  if skip and "/\* End" in line:
+                  if skip and "/* End" in line:
                       skip = False
                       continue
                   if not skip and "SwiftPackage" not in line:
@@ -90,5 +87,5 @@ workflows:
 
     publishing:
       app_store_connect:
-        auth: integration
+        auth: app_store_connect
         submit_to_testflight: true
