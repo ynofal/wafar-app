@@ -4,8 +4,8 @@ workflows:
     instance_type: mac_mini_m2
 
     environment:
-      flutter: 3.44.7
-      xcode: 26.0
+      flutter: 3.44.3
+      xcode: 16.1
       cocoapods: 1.16.2
 
       ios_signing:
@@ -14,159 +14,96 @@ workflows:
 
     scripts:
 
-      # =========================================================
-      # 1. Disable Flutter Swift Package Manager
-      # =========================================================
       - name: Disable Swift Package Manager
         script: |
           flutter config --no-enable-swift-package-manager
 
-      # =========================================================
-      # 2. Clean Flutter
-      # =========================================================
       - name: Clean Flutter
         script: |
           flutter clean
 
-      # =========================================================
-      # 3. Remove ALL old iOS / SPM generated files
-      # =========================================================
-      - name: Remove old iOS and SwiftPM data
+      - name: Remove iOS generated data
         script: |
           rm -rf ios/.symlinks
           rm -rf ios/Pods
           rm -rf ios/Podfile.lock
           rm -rf ios/Runner.xcworkspace
 
+      - name: Remove Swift Package Manager cache
+        script: |
           find ios -name "Package.resolved" -type f -delete
-          find ios -name "*.xcscmblueprint" -type f -delete
-
           rm -rf ~/Library/Developer/Xcode/DerivedData/*
           rm -rf ~/Library/Developer/Xcode/SourcePackages/*
           rm -rf ~/Library/Caches/org.swift.swiftpm/*
           rm -rf ~/Library/org.swift.swiftpm/*
 
-      # =========================================================
-      # 4. Remove manually added Swift Package references
-      #    from Runner.xcodeproj
-      # =========================================================
-      - name: Remove Swift Package references
-        script: |
-          python3 <<'PY'
-          import re
-          from pathlib import Path
-
-          path = Path("ios/Runner.xcodeproj/project.pbxproj")
-
-          if not path.exists():
-              raise SystemExit("ERROR: project.pbxproj was not found")
-
-          text = path.read_text(encoding="utf-8")
-
-          # Remove remote Swift Package references
-          text = re.sub(
-              r'/\* Begin XCRemoteSwiftPackageReference section \*/.*?/\* End XCRemoteSwiftPackageReference section \*/',
-              '',
-              text,
-              flags=re.DOTALL
-          )
-
-          # Remove Swift Package product dependencies
-          text = re.sub(
-              r'/\* Begin XCSwiftPackageProductDependency section \*/.*?/\* End XCSwiftPackageProductDependency section \*/',
-              '',
-              text,
-              flags=re.DOTALL
-          )
-
-          path.write_text(text, encoding="utf-8")
-
-          print("SUCCESS: Swift Package references removed.")
-          PY
-
-      # =========================================================
-      # 5. Generate GoogleService-Info.plist
-      # =========================================================
       - name: Generate GoogleService-Info.plist
         script: |
           cat << 'EOF' > ios/Runner/GoogleService-Info.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0.2">
+          <plist version="1.0">
           <dict>
               <key>CLIENT_ID</key>
               <string>dummy_client_id</string>
-
               <key>REVERSED_CLIENT_ID</key>
               <string>dummy_reversed_client_id</string>
-
               <key>API_KEY</key>
               <string>dummy_api_key</string>
-
               <key>GCM_SENDER_ID</key>
               <string>dummy_gcm_sender_id</string>
-
               <key>PLIST_VERSION</key>
               <string>1</string>
-
               <key>BUNDLE_ID</key>
               <string>com.wafar.user</string>
-
               <key>PROJECT_ID</key>
               <string>wafar-app</string>
-
               <key>STORAGE_BUCKET</key>
               <string>wafar-app.appspot.com</string>
-
               <key>IS_ADS_ENABLED</key>
               <false/>
-
               <key>IS_ANALYTICS_ENABLED</key>
               <false/>
-
               <key>IS_APPINVITE_ENABLED</key>
               <true/>
-
               <key>IS_GCM_ENABLED</key>
               <true/>
-
               <key>IS_SIGNIN_ENABLED</key>
               <true/>
-
               <key>GOOGLE_APP_ID</key>
               <string>dummy_google_app_id</string>
           </dict>
           </plist>
           EOF
 
-      # =========================================================
-      # 6. Get Flutter packages
-      # =========================================================
       - name: Get Flutter dependencies
         script: |
           flutter pub get
 
-      # =========================================================
-      # 7. Recreate CocoaPods workspace
-      # =========================================================
       - name: Install CocoaPods
         script: |
           cd ios
           pod install --repo-update
 
-      # =========================================================
-      # 8. Apply App Store provisioning profile
-      # =========================================================
       - name: Set up App Store code signing
         script: |
           xcode-project use-profiles
 
-      # =========================================================
-      # 9. Build signed App Store IPA
-      # =========================================================
+      - name: Set App Name and Build Number
+        script: |
+          /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName وفّر" ios/Runner/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 1.0.0" ios/Runner/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 2" ios/Runner/Info.plist
+
       - name: Build iOS IPA
         script: |
-          flutter build ipa --release
+          flutter build ipa \
+            --release \
+            --export-options-plist=/Users/builder/export_options.plist
 
     artifacts:
       - build/ios/ipa/*.ipa
+
+    publishing:
+      app_store_connect:
+        auth: integration
