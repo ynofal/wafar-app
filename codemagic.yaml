@@ -9,10 +9,6 @@ workflows:
       cocoapods: 1.16.2
 
     scripts:
-      - name: Disable Swift Package Manager globally
-        script: |
-          flutter config --no-enable-swift-package-manager
-
       - name: Clean Everything and Nuke SPM Caches
         script: |
           flutter clean
@@ -24,6 +20,24 @@ workflows:
           rm -rf ~/Library/Caches/org.swift.swiftpm/*
           rm -rf ~/Library/org.swift.swiftpm/*
           find ios -name "Package.resolved" -type f -delete
+
+      - name: Strip Swift Package References from Xcode Project
+        script: |
+          python3 <<'PY'
+          import re
+          from pathlib import Path
+
+          pbxproj_path = Path("ios/Runner.xcodeproj/project.pbxproj")
+          if pbxproj_path.exists():
+              content = pbxproj_path.read_text(encoding="utf-8")
+              
+              # إزالة أقسام الـ Swift Packages بالكامل من ملف المشروع لتجنب انهيار إكسود
+              content = re.sub(r'/\* Begin XCRemoteSwiftPackageReference section \*/.*?(/\* End XCRemoteSwiftPackageReference section \*/)', '', content, flags=re.DOTALL)
+              content = re.sub(r'/\* Begin XCSwiftPackageProductDependency section \*/.*?(/\* End XCSwiftPackageProductDependency section \*/)', '', content, flags=re.DOTALL)
+              
+              pbxproj_path.write_text(content, encoding="utf-8")
+              print("Successfully stripped all Swift Package dependencies from project.pbxproj.")
+          PY
 
       - name: Create GoogleService-Info.plist
         script: |
