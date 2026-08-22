@@ -1,121 +1,120 @@
-== Building for iOS ==
+workflows:
+  ios-workflow:
+    name: Wafar iOS
+    instance_type: mac_mini_m2
 
-> xcode-project use-profiles
-Configure code signing settings
-Searching for files matching /Users/builder/Library/Developer/Xcode/UserData/Provisioning Profiles/*.mobileprovision
-Searching for files matching /Users/builder/Library/Developer/Xcode/UserData/Provisioning Profiles/*.provisionprofile
-Searching for files matching /Users/builder/Library/MobileDevice/Provisioning Profiles/*.mobileprovision
-Searching for files matching /Users/builder/Library/MobileDevice/Provisioning Profiles/*.provisionprofile
-List available code signing certificates in keychain /Users/builder/Library/codemagic-cli-tools/keychains/22-08-26_zxdjijo8.keychain-db
-/Users/builder/.local/share/uv/tools/codemagic-cli-tools/lib/python3.13/site-packages/codemagic/models/certificate.py:102: UserWarning: Attribute's length must be >= 1 and <= 64, but it was 77
-  for name_attribute in self.certificate.subject
-Searching for files matching /Users/builder/clone/ios/**/*.xcodeproj
-Completed configuring code signing settings
- - Using profile "Wafar ios_app_store 1787039218" [4e03f934-35f9-4e24-9e42-60f6c3dcda83] for target "Runner" [Debug] from project "Runner"
- - Using profile "Wafar ios_app_store 1787039218" [4e03f934-35f9-4e24-9e42-60f6c3dcda83] for target "Runner" [Profile] from project "Runner"
- - Using profile "Wafar ios_app_store 1787039218" [4e03f934-35f9-4e24-9e42-60f6c3dcda83] for target "Runner" [Release] from project "Runner"
-Generated options for exporting the project
- - Method: app-store
- - Provisioning Profiles:
-     - com.wafar.user: Wafar ios_app_store 1787039218
- - Signing Certificate: Apple Distribution
- - Signing Style: manual
- - Team Id: 7D4P832KHW
-Saved export options to /Users/builder/export_options.plist
+    environment:
+      flutter: 3.44.3
+      xcode: latest
+      cocoapods: 1.16.2
 
-> flutter build ipa --release --export-options-plist /Users/builder/export_options.plist
-Xcode is fetching Swift Package Manager dependencies. This may take several minutes...
-  Fetching from https://github.com/zhangao0086/DKImagePickerController (cached)...     
-  Fetching from https://github.com/simolus3/CSQLite.git (cached)...     
-  Fetching from https://github.com/zhangao0086/DKCamera (cached)...     
-  Fetching from https://github.com/zhangao0086/DKPhotoGallery (cached)...     
-  Fetching from https://github.com/openid/AppAuth-iOS.git (cached)...     
-  Fetching from https://github.com/google/GoogleDataTransport.git (cached)...     
-  Fetching from https://github.com/googleads/google-ads-on-device-conversion-ios-sdk (cached)...     
-  Fetching from https://github.com/facebook/facebook-ios-sdk (cached)...     
-  Fetching from https://github.com/firebase/nanopb.git (cached)...     
-  Fetching from https://github.com/firebase/leveldb.git (cached)...     
-  Fetching from https://github.com/SDWebImage/SDWebImage (cached)...     
-  Fetching from https://github.com/google/promises.git (cached)...     
-  Fetching from https://github.com/mattgallagher/CwlCatchException.git (cached)...     
-  Fetching from https://github.com/google/GTMAppAuth.git (cached)...     
-  Fetching from https://github.com/google/interop-ios-for-google-sdks.git (cached)...     
-  Fetching from https://github.com/TimOliver/TOCropViewController (cached)...     
-  Fetching from https://github.com/google/GoogleSignIn-iOS.git (cached)...     
-  Fetching from https://github.com/google/grpc-binary.git (cached)...     
-  Fetching from https://github.com/firebase/firebase-ios-sdk (cached)...     
-  Fetching from https://github.com/google/abseil-cpp-binary.git (cached)...     
-  Fetching from https://github.com/google/GoogleAppMeasurement.git (cached)...     
-  Fetching from https://github.com/firebase/flutterfire...      
-  Fetching from https://github.com/google/gtm-session-fetcher.git (cached)...     
-  Fetching from https://github.com/google/GoogleUtilities.git (cached)...     
-  Fetching from https://github.com/kirualex/SwiftyGif.git (cached)...     
-  Fetching from https://github.com/google/app-check.git (cached)...     
-Xcode failed to resolve Swift Package Manager dependencies:
-*** Terminating app due to uncaught exception 'NSInvalidArgumentException', reason: '*** -[NSMutableArray insertObjects:atIndexes:]: count of array (54) differs from count of index set (53)'
-*** First throw call stack:
-(
-	0   CoreFoundation                      0x000000019ddd3ae0 __exceptionPreprocess + 176
-	1   libobjc.A.dylib                     0x000000019d896b90 objc_exception_throw + 88
-	2   CoreFoundation                      0x000000019dece084 -[__NSCFString characterAtIndex:].cold.1 + 0
-	3   CoreFoundation                      0x000000019ddb9ef4 -[NSMutableArray insertObjects:atIndexes:] + 1444
-	4   IDEFoundation                       0x000000010aa4b9a4 __50-[IDEGroup insertGroupSubitems:atIndexes:context:]_block_invoke + 1064
-	5   DVTFoundation                       0x0000000103a0f138 -[DVTModelObjectGraph performBlockCoalescingModelChanges:] + 160
-	6   IDEFoundation                       0x000000010aa4b500 -[IDEGroup insertGroupSubitems:atIndexes:context:] + 248
-	7   DVTFoundation                       0x00000001039d201c -[NSMutableArray(DVTFoundationClassAdditions) dvt_sortedInsertOfObjects:withComparator:] + 184
-	8   IDESwiftPackageCore                 0x0000000113ad2a18 $s19IDESwiftPackageCore0A9WorkspaceC23DependencyPackagesGroupC12sortedInsert2ofySayAA0abE13FileReferenceOG_tF + 324
-	9   IDESwiftPackageCore                 0x0000000113a291c4 $s19IDESwiftPackageCore23IDESPMWorkspaceDelegateC32registerDependencyFileReferences33_033DB97E8C2A552F3158921835EE9F98LL_27modelGraphSynchronizerTokenySayAA0abgH9ReferenceO010dependencyU0_AC16Reg	10  IDESwiftPackageCore                 0x0000000113a2c82c $s19IDESwiftPackageCore23IDESPMWorkspaceDelegateC27dependencyPackagesDidUpdate33_033DB97E8C2A552F3158921835EE9F98LL8packages14graphHasErrors25revalidatedFilePathCaches27modelGraphSynchronizerToke	11  IDESwiftPackageCore                 0x0000000113a20a2c $s19IDESwiftPackageCore23IDESPMWorkspaceDelegateC27packageGraphDidFinishAction_8duration6resulty7SwiftPM12SPMWorkspaceC0bgJ0O_SdAG0oebgJ16ResolutionResultOtYaFyAC05ModelG17SynchronizerToken33_033	12  IDESwiftPackageCore                 0x0000000113a28908 $s19IDESwiftPackageCore23IDESPMWorkspaceDelegateC38disableWorkspaceContentSynchronization33_033DB97E8C2A552F3158921835EE9F98LL6duringyyAC27ModelGraphSynchronizerTokenAELLVXE_tFyyXEfU_TA + 20
-	13  DVTFoundation                       0x0000000103bb3ee8 $sSo19DVTModelObjectGraphC13DVTFoundationE34performBlockCoalescingModelChangesyxxyXElFyyXEfU_ + 104
-	14  DVTFoundation                       0x0000000103b6def0 $s2os18OSLogInterpolationV06appendC0_7privacyySo8NSObjectCyXA_AA0B7PrivacyVtFAGSgycfu_ + 20
-	15  DVTFoundation                       0x0000000103bb3c00 $sIeg_IyB_TR + 20
-	16  DVTFoundation                       0x0000000103a0f1b8 __58-[DVTModelObjectGraph performBlockCoalescingModelChanges:]_block_invoke + 104
-	17  DVTFoundation                       0x0000000103a09400 -[DVTModelGraphTransactionScope performTransaction:] + 60
-	18  DVTFoundation                       0x0000000103a0f120 -[DVTModelObjectGraph performBlockCoalescingModelChanges:] + 136
-	19  DVTFoundation                       0x0000000103bb4690 $sSo19DVTModelObjectGraphC13DVTFoundationE34performBlockCoalescingModelChangesyxxyXElF + 344
-	20  IDESwiftPackageCore                 0x0000000113a12df8 $s19IDESwiftPackageCore23IDESPMWorkspaceDelegateC38disableWorkspaceContentSynchronization33_033DB97E8C2A552F3158921835EE9F98LL6duringyyAC27ModelGraphSynchronizerTokenAELLVXE_tF + 512
-	21  IDESwiftPackageCore                 0x0000000113a1f8e8 $s19IDESwiftPackageCore23IDESPMWorkspaceDelegateC27packageGraphDidFinishAction_8duration6resulty7SwiftPM12SPMWorkspaceC0bgJ0O_SdAG0oebgJ16ResolutionResultOtYaFTY8_ + 204
-	22  IDESwiftPackageCore                 0x0000000113a2d795 $s19IDESwiftPackageCore23IDESPMWorkspaceDelegateC27packageGraphWillStartActionyy7SwiftPM12SPMWorkspaceC0bgJ0OFy13DVTFoundation24DVTAsyncStreamControllerCyAE0mB15ResolutionEventOs5NeverOGSgzYbXEfU	23  SwiftPM                             0x00000001254ed915 $s7SwiftPM12SPMWorkspaceC26packageGraphActionFinished33_918CA8CFEB8D3E06D2EEA2771EA5EA00LLyyAC07PackageE16ResolutionResultAELLVYaFTQ1_ + 1
-	24  SwiftPM                             0x00000001254ed285 $s7SwiftPM12SPMWorkspaceC46processPackageGraphActionsInBackgroundIfNeeded33_918CA8CFEB8D3E06D2EEA2771EA5EA00LL010canProcessefG0yAC11AffirmativeO_tFyyYaYbcfU1_yyYacfU0_TQ1_ + 1
-	25  SwiftPM                             0x00000001254ccd65 $s7SwiftPM21SPMRepositoryProviderC10UnderlyingC13SourceControl010RepositoryD0AafGP4open10repository2atAF0H0_pAF0H9SpecifierV_6Basics12AbsolutePathVtYaKFTWTQ0_ + 1
-	26  SwiftPM                             0x0000000125521b65 $sxIeAgHr_xs5Error_pIegHrzo_s8SendableRzs5NeverORs_r0_lTRTQ0_ + 1
-	27  SwiftPM                             0x000000012549378d $s7SwiftPM21SPMRepositoryProviderC10UnderlyingC13SourceControl010RepositoryD0AafGP15openWorkingCopy2atAF0J8Checkout_p6Basics12AbsolutePathV_tYaKFTWTQ0_ + 1
-	28  libswift_Concurrency.dylib          0x00000002863ec83d _ZL23completeTaskWithClosurePN5swift12AsyncContextEPNS_10SwiftErrorE + 1
-)
-** INTERNAL ERROR: Uncaught exception **
-Uncaught Exception: *** -[NSMutableArray insertObjects:atIndexes:]: count of array (54) differs from count of index set (53)
-Stack:
-  0   __exceptionPreprocess (in CoreFoundation)
-  1   objc_exception_throw (in libobjc.A.dylib)
-  2   -[__NSCFString characterAtIndex:].cold.1 (in CoreFoundation)
-  3   -[NSMutableArray insertObjects:atIndexes:] (in CoreFoundation)
-  4   __50-[IDEGroup insertGroupSubitems:atIndexes:context:]_block_invoke (in IDEFoundation)
-  5   -[DVTModelObjectGraph performBlockCoalescingModelChanges:] (in DVTFoundation)
-  6   -[IDEGroup insertGroupSubitems:atIndexes:context:] (in IDEFoundation)
-  7   -[NSMutableArray(DVTFoundationClassAdditions) dvt_sortedInsertOfObjects:withComparator:] (in DVTFoundation)
-  8   IDESwiftWorkspace.DependencyPackagesGroup.sortedInsert(of:) (in IDESwiftPackageCore)
-  9   specialized IDESPMWorkspaceDelegate.registerDependencyFileReferences(_:modelGraphSynchronizerToken:) (in IDESwiftPackageCore)
- 10   specialized IDESPMWorkspaceDelegate.dependencyPackagesDidUpdate(packages:graphHasErrors:revalidatedFilePathCaches:modelGraphSynchronizerToken:) (in IDESwiftPackageCore)
- 11   closure #1 in IDESPMWorkspaceDelegate.packageGraphDidFinishAction(_:duration:result:) (in IDESwiftPackageCore)
- 12   partial apply for closure #1 in IDESPMWorkspaceDelegate.disableWorkspaceContentSynchronization(during:) (in IDESwiftPackageCore)
- 13   <deduplicated_symbol> (in DVTFoundation)
- 14   <deduplicated_symbol> (in DVTFoundation)
- 15   thunk for @escaping @callee_guaranteed () -> () (in DVTFoundation)
- 16   __58-[DVTModelObjectGraph performBlockCoalescingModelChanges:]_block_invoke (in DVTFoundation)
- 17   -[DVTModelGraphTransactionScope performTransaction:] (in DVTFoundation)
- 18   -[DVTModelObjectGraph performBlockCoalescingModelChanges:] (in DVTFoundation)
- 19   DVTModelObjectGraph.performBlockCoalescingModelChanges(_:) (in DVTFoundation)
- 20   IDESPMWorkspaceDelegate.disableWorkspaceContentSynchronization(during:) (in IDESwiftPackageCore)
- 21   IDESPMWorkspaceDelegate.packageGraphDidFinishAction(_:duration:result:) (in IDESwiftPackageCore)
- 22   <deduplicated_symbol> (in IDESwiftPackageCore)
- 23   SPMWorkspace.packageGraphActionFinished(_:) (in SwiftPM)
- 24   closure #2 in closure #3 in SPMWorkspace.processPackageGraphActionsInBackgroundIfNeeded(canProcessPackageGraphActions:) (in SwiftPM)
- 25   <deduplicated_symbol> (in SwiftPM)
- 26   <deduplicated_symbol> (in SwiftPM)
- 27   <deduplicated_symbol> (in SwiftPM)
- 28   completeTaskWithClosure(swift::AsyncContext*, swift::SwiftError*) (in libswift_Concurrency.dylib)
+    scripts:
+      - name: Disable Swift Package Manager globally
+        script: |
+          flutter config --no-enable-swift-package-manager
 
+      - name: Clean Flutter environment
+        script: |
+          flutter clean
 
+      - name: Remove old iOS caches and symlinks
+        script: |
+          rm -rf ios/.symlinks
+          rm -rf ios/Pods
+          rm -rf ios/Podfile.lock
+          find ios -name "Package.resolved" -type f -delete
 
+      - name: Deep clean Xcode DerivedData, SPM Caches and Workspace Data
+        script: |
+          rm -rf ~/Library/Developer/Xcode/DerivedData/*
+          rm -rf ~/Library/Caches/org.swift.swiftpm/*
+          rm -rf ~/Library/org.swift.swiftpm/*
+          rm -rf ios/Runner.xcworkspace/xcshareddata/swiftpm
+          rm -rf ios/Runner.xcworkspace/xcuserdata
 
-Build failed :|
-Failed to build for iOS
+      - name: Purge all package references and workspace data from Xcode project
+        script: |
+          python3 <<'PY'
+          import os
+          from pathlib import Path
+          import shutil
+
+          pbxproj_path = Path("ios/Runner.xcodeproj/project.pbxproj")
+          if pbxproj_path.exists():
+              content = pbxproj_path.read_text(encoding="utf-8")
+              lines = content.splitlines()
+              new_lines = []
+              skip = False
+              for line in lines:
+                  if "XCSwiftPackageProductDependency" in line or "XCRemoteSwiftPackageReference" in line or "SwiftPackage" in line:
+                      skip = True
+                  if skip and "/* End" in line:
+                      skip = False
+                      continue
+                  if not skip:
+                      new_lines.append(line)
+                      
+              pbxproj_path.write_text("\n".join(new_lines), encoding="utf-8")
+              print("Successfully purged all SPM references from project.pbxproj.")
+          PY
+
+      - name: Create GoogleService-Info.plist
+        script: |
+          cat << 'EOF' > ios/Runner/GoogleService-Info.plist
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CLIENT_ID</key>
+              <string>dummy_client_id</string>
+              <key>REVERSED_CLIENT_ID</key>
+              <string>dummy_reversed_client_id</string>
+              <key>API_KEY</key>
+              <string>dummy_api_key</string>
+              <key>GCM_SENDER_ID</key>
+              <string>dummy_gcm_sender_id</string>
+              <key>PLIST_VERSION</key>
+              <string>1</string>
+              <key>BUNDLE_ID</key>
+              <string>com.wafar.user</string>
+              <key>PROJECT_ID</key>
+              <string>wafar-app</string>
+              <key>STORAGE_BUCKET</key>
+              <string>wafar-app.appspot.com</string>
+              <key>IS_ADS_ENABLED</key>
+              <false></false>
+              <key>IS_ANALYTICS_ENABLED</key>
+              <false></false>
+              <key>IS_APPINVITE_ENABLED</key>
+              <true></true>
+              <key>IS_GCM_ENABLED</key>
+              <true></true>
+              <key>IS_SIGNIN_ENABLED</key>
+              <true></true>
+              <key>GOOGLE_APP_ID</key>
+              <string>dummy_google_app_id</string>
+          </dict>
+          </plist>
+          EOF
+
+      - name: Get Flutter dependencies
+        script: |
+          flutter pub get
+
+      - name: Install CocoaPods dependencies
+        script: |
+          cd ios
+          pod install --repo-update
+
+      - name: Set up code signing profiles
+        script: |
+          xcode-project use-profiles
+
+      - name: Build iOS IPA release
+        script: |
+          flutter build ipa \
+            --release \
+            --export-options-plist=/Users/builder/export_options.plist
+
+    artifacts:
+      - build/ios/ipa/*.ipa
