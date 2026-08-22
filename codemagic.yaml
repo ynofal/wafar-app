@@ -1,18 +1,28 @@
 workflows:
   ios-workflow:
-    name: Wafar iOS
+    name: iOS Workflow
+    max_build_duration: 120
     instance_type: mac_mini_m2
-    integrations:
-      app_store_connect: codemagic_api_key   # اسم الـ integration اللي عملته في الـ UI
     environment:
-      flutter: 3.44.3
+      flutter: "3.44.3"
       xcode: latest
-      cocoapods: 1.16.2
-      ios_signing:
-        distribution_type: app_store   # أو ad_hoc لو التوزيع مش عن طريق الـ App Store
-        bundle_identifier: com.wafar.user
+      cocoapods: default
+      vars:
+        BUNDLE_ID: "com.wafar.user"
     scripts:
-      # ... باقي السكريبتات زي ما هي ...
-      - name: Set up code signing profiles
+      - name: Install dependencies
         script: |
-          xcode-project use-profiles
+          flutter pub get
+      - name: Install CocoaPods
+        script: |
+          cd ios && pod install
+      - name: Set up code signing
+        script: |
+          app-store-connect fetch-signing-files "$BUNDLE_ID" --type APP_STORE
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        expire_beta_builds_before_publishing: false
