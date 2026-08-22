@@ -2,137 +2,48 @@ workflows:
   ios-workflow:
     name: Wafar iOS
     instance_type: mac_mini_m2
-
+    integrations:
+      app_store_connect: codemagic_api_key
     environment:
-      flutter: 3.44.7
-      xcode: 16.4
+      flutter: 3.44.3
+      xcode: 16.1          # <-- ثبّت فرشن مش "latest"، لأن latest بيجيب 16.2+ اللي فيها الباج ده
       cocoapods: 1.16.2
-
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.wafar.user
-
     scripts:
-
-      - name: Completely Disable Swift Package Manager
+      - name: Clean Everything and Nuke SPM Caches
         script: |
-          flutter config --no-enable-swift-package-manager
-
-          rm -rf ios/Runner.xcworkspace
+          flutter clean
+          rm -rf ios/.symlinks
           rm -rf ios/Pods
           rm -rf ios/Podfile.lock
-
-          find ios -name "Package.resolved" -type f -delete
-          find ios -name "*.xcscmblueprint" -type f -delete
-
+          rm -rf ios/Runner.xcworkspace
           rm -rf ~/Library/Developer/Xcode/DerivedData/*
           rm -rf ~/Library/Caches/org.swift.swiftpm/*
           rm -rf ~/Library/org.swift.swiftpm/*
-          rm -rf ~/Library/Developer/Xcode/SourcePackages/*
-
-      - name: Remove Swift Package References from Xcode Project
-        script: |
-          python3 <<'PY'
-          import re
-          from pathlib import Path
-
-          path = Path("ios/Runner.xcodeproj/project.pbxproj")
-
-          if path.exists():
-              text = path.read_text(encoding="utf-8")
-
-              text = re.sub(
-                  r'/\* Begin XCRemoteSwiftPackageReference section \*/.*?/\* End XCRemoteSwiftPackageReference section \*/',
-                  '',
-                  text,
-                  flags=re.DOTALL
-              )
-
-              text = re.sub(
-                  r'/\* Begin XCSwiftPackageProductDependency section \*/.*?/\* End XCSwiftPackageProductDependency section \*/',
-                  '',
-                  text,
-                  flags=re.DOTALL
-              )
-
-              path.write_text(text, encoding="utf-8")
-
-              print("Swift Package references removed from project.pbxproj")
-          else:
-              print("project.pbxproj not found")
-
-      - name: Clean Flutter
-        script: |
-          flutter clean
-
-      - name: Generate GoogleService-Info.plist
+          rm -rf ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/swiftpm
+          find ios -name "Package.resolved" -type f -delete
+      # لاحظ: خطوة "Strip Swift Package References" اتشالت خالص من هنا
+      - name: Create GoogleService-Info.plist
         script: |
           cat << 'EOF' > ios/Runner/GoogleService-Info.plist
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>CLIENT_ID</key>
-              <string>dummy_client_id</string>
-
-              <key>REVERSED_CLIENT_ID</key>
-              <string>dummy_reversed_client_id</string>
-
-              <key>API_KEY</key>
-              <string>dummy_api_key</string>
-
-              <key>GCM_SENDER_ID</key>
-              <string>dummy_gcm_sender_id</string>
-
-              <key>PLIST_VERSION</key>
-              <string>1</string>
-
-              <key>BUNDLE_ID</key>
-              <string>com.wafar.user</string>
-
-              <key>PROJECT_ID</key>
-              <string>wafar-app</string>
-
-              <key>STORAGE_BUCKET</key>
-              <string>wafar-app.appspot.com</string>
-
-              <key>IS_ADS_ENABLED</key>
-              <false/>
-
-              <key>IS_ANALYTICS_ENABLED</key>
-              <false/>
-
-              <key>IS_APPINVITE_ENABLED</key>
-              <true/>
-
-              <key>IS_GCM_ENABLED</key>
-              <true/>
-
-              <key>IS_SIGNIN_ENABLED</key>
-              <true/>
-
-              <key>GOOGLE_APP_ID</key>
-              <string>dummy_google_app_id</string>
-          </dict>
-          </plist>
+          ... (نفس المحتوى اللي عندك)
           EOF
-
       - name: Get Flutter dependencies
         script: |
           flutter pub get
-
-      - name: Install CocoaPods
+      - name: Install CocoaPods and Recreate Workspace
         script: |
           cd ios
           pod install --repo-update
-
-      - name: Set up App Store code signing
+      - name: Set up code signing profiles
         script: |
           xcode-project use-profiles
-
-      - name: Build iOS IPA
+      - name: Build iOS IPA release
         script: |
-          flutter build ipa --release
-
+          flutter build ipa \
+            --release \
+            --export-options-plist=/Users/builder/export_options.plist
     artifacts:
       - build/ios/ipa/*.ipa
