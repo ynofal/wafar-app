@@ -9,13 +9,12 @@ workflows:
       cocoapods: 1.16.2
 
     scripts:
-      - name: Clean Everything and Nuke SPM Caches
+      - name: Clean Everything
         script: |
           flutter clean
           rm -rf ios/.symlinks
           rm -rf ios/Pods
           rm -rf ios/Podfile.lock
-          rm -rf ios/Runner.xcworkspace
           rm -rf ~/Library/Developer/Xcode/DerivedData/*
           rm -rf ~/Library/Caches/org.swift.swiftpm/*
           rm -rf ~/Library/org.swift.swiftpm/*
@@ -28,16 +27,25 @@ workflows:
           from pathlib import Path
 
           pbxproj_path = Path("ios/Runner.xcodeproj/project.pbxproj")
+
           if pbxproj_path.exists():
               content = pbxproj_path.read_text(encoding="utf-8")
-              
-              # إزالة أقسام الـ Swift Packages بالكامل من ملف المشروع لتجنب انهيار إكسود
-              content = re.sub(r'/\* Begin XCRemoteSwiftPackageReference section \*/.*?(/\* End XCRemoteSwiftPackageReference section \*/)', '', content, flags=re.DOTALL)
-              content = re.sub(r'/\* Begin XCSwiftPackageProductDependency section \*/.*?(/\* End XCSwiftPackageProductDependency section \*/)', '', content, flags=re.DOTALL)
-              
+
+              content = re.sub(
+                  r'/\* Begin XCRemoteSwiftPackageReference section \*/.*?/\* End XCRemoteSwiftPackageReference section \*/',
+                  '',
+                  content,
+                  flags=re.DOTALL
+              )
+
+              content = re.sub(
+                  r'/\* Begin XCSwiftPackageProductDependency section \*/.*?/\* End XCSwiftPackageProductDependency section \*/',
+                  '',
+                  content,
+                  flags=re.DOTALL
+              )
+
               pbxproj_path.write_text(content, encoding="utf-8")
-              print("Successfully stripped all Swift Package dependencies from project.pbxproj.")
-          PY
 
       - name: Create GoogleService-Info.plist
         script: |
@@ -63,15 +71,15 @@ workflows:
               <key>STORAGE_BUCKET</key>
               <string>wafar-app.appspot.com</string>
               <key>IS_ADS_ENABLED</key>
-              <false></false>
+              <false/>
               <key>IS_ANALYTICS_ENABLED</key>
-              <false></false>
+              <false/>
               <key>IS_APPINVITE_ENABLED</key>
-              <true></true>
+              <true/>
               <key>IS_GCM_ENABLED</key>
-              <true></true>
+              <true/>
               <key>IS_SIGNIN_ENABLED</key>
-              <true></true>
+              <true/>
               <key>GOOGLE_APP_ID</key>
               <string>dummy_google_app_id</string>
           </dict>
@@ -82,7 +90,7 @@ workflows:
         script: |
           flutter pub get
 
-      - name: Install CocoaPods and Recreate Workspace
+      - name: Install CocoaPods
         script: |
           cd ios
           pod install --repo-update
