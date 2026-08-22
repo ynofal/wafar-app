@@ -3,9 +3,6 @@ workflows:
     name: Wafar iOS
     instance_type: mac_mini_m2
 
-    integrations:
-      app_store_connect: codemagic_api_key
-
     environment:
       flutter: 3.44.3
       xcode: 16.1
@@ -17,72 +14,22 @@ workflows:
 
     scripts:
 
-      - name: Disable Swift Package Manager
-        script: |
-          flutter config --no-enable-swift-package-manager
-
-      - name: Clean Flutter
+      - name: Clean Flutter and iOS
         script: |
           flutter clean
-
-      - name: Clean iOS Pods and SPM cache
-        script: |
           rm -rf ios/.symlinks
           rm -rf ios/Pods
           rm -rf ios/Podfile.lock
-          find ios -name "Package.resolved" -type f -delete
+          rm -rf ios/Runner.xcworkspace
           rm -rf ~/Library/Developer/Xcode/DerivedData/*
           rm -rf ~/Library/Caches/org.swift.swiftpm/*
           rm -rf ~/Library/org.swift.swiftpm/*
-
-      - name: Create GoogleService-Info.plist
-        script: |
-          cat << 'EOF' > ios/Runner/GoogleService-Info.plist
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>CLIENT_ID</key>
-              <string>dummy_client_id</string>
-              <key>REVERSED_CLIENT_ID</key>
-              <string>dummy_reversed_client_id</string>
-              <key>API_KEY</key>
-              <string>dummy_api_key</string>
-              <key>GCM_SENDER_ID</key>
-              <string>dummy_gcm_sender_id</string>
-              <key>PLIST_VERSION</key>
-              <string>1</string>
-              <key>BUNDLE_ID</key>
-              <string>com.wafar.user</string>
-              <key>PROJECT_ID</key>
-              <string>wafar-app</string>
-              <key>STORAGE_BUCKET</key>
-              <string>wafar-app.appspot.com</string>
-              <key>IS_ADS_ENABLED</key>
-              <false/>
-              <key>IS_ANALYTICS_ENABLED</key>
-              <false/>
-              <key>IS_APPINVITE_ENABLED</key>
-              <true/>
-              <key>IS_GCM_ENABLED</key>
-              <true/>
-              <key>IS_SIGNIN_ENABLED</key>
-              <true/>
-              <key>GOOGLE_APP_ID</key>
-              <string>dummy_google_app_id</string>
-          </dict>
-          </plist>
-          EOF
+          rm -rf ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/swiftpm
+          find ios -name "Package.resolved" -type f -delete
 
       - name: Get Flutter dependencies
         script: |
           flutter pub get
-
-      - name: Set App Name and Build Number
-        script: |
-          /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName وفّر" ios/Runner/Info.plist
-          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 1.0.0" ios/Runner/Info.plist
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 2" ios/Runner/Info.plist
 
       - name: Install CocoaPods
         script: |
@@ -93,7 +40,13 @@ workflows:
         script: |
           xcode-project use-profiles
 
-      - name: Build iOS IPA release
+      - name: Set App Version and Build Number
+        script: |
+          /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName وفّر" ios/Runner/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 1.0.0" ios/Runner/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 2" ios/Runner/Info.plist
+
+      - name: Build iOS IPA
         script: |
           flutter build ipa \
             --release \
