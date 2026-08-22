@@ -35,34 +35,6 @@ workflows:
           rm -rf ~/Library/Caches/org.swift.swiftpm
           rm -rf ~/Library/org.swift.swiftpm
 
-      - name: Remove Swift Package references from Xcode project
-        script: |
-          python3 <<'PY'
-          import re
-          from pathlib import Path
-
-          p = Path("ios/Runner.xcodeproj/project.pbxproj")
-          s = p.read_text(encoding="utf-8")
-
-          s = re.sub(
-              r'/\* Begin XCRemoteSwiftPackageReference section \*/.*?/\* End XCRemoteSwiftPackageReference section \*/',
-              '',
-              s,
-              flags=re.S
-          )
-
-          s = re.sub(
-              r'/\* Begin XCSwiftPackageProductDependency section \*/.*?/\* End XCSwiftPackageProductDependency section \*/',
-              '',
-              s,
-              flags=re.S
-          )
-
-          p.write_text(s, encoding="utf-8")
-
-          print("Swift Package references removed")
-          PY
-
       - name: Generate GoogleService-Info.plist
         script: |
           cat << 'EOF' > ios/Runner/GoogleService-Info.plist
@@ -106,16 +78,22 @@ workflows:
         script: |
           flutter pub get
 
+      - name: Set App Name and Build Number
+        script: |
+          /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName وفّر" ios/Runner/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 1.0.0" ios/Runner/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 2" ios/Runner/Info.plist
+
       - name: Install CocoaPods
         script: |
           cd ios
           pod install --repo-update
 
-      - name: Set up code signing
+      - name: Set up App Store code signing
         script: |
           xcode-project use-profiles
 
-      - name: Build signed iOS IPA
+      - name: Build iOS IPA
         script: |
           flutter build ipa --release
 
