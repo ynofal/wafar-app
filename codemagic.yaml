@@ -7,6 +7,8 @@ workflows:
       flutter: 3.44.7
       xcode: latest
       cocoapods: 1.16.2
+      groups:
+        - ios-workflow   # مجموعة المتغيرات المربطوة في كودماجيك
 
     scripts:
 
@@ -31,13 +33,10 @@ workflows:
           rm -rf ~/Library/Caches/org.swift.swiftpm
           rm -rf ~/Library/org.swift.swiftpm
 
-      - name: Verify or Handle GoogleService-Info.plist
+      - name: Set up GoogleService-Info.plist
         script: |
-          if [ ! -f "ios/Runner/GoogleService-Info.plist" ]; then
-            echo "Warning: GoogleService-Info.plist not found in repository path!"
-          else
-            echo "GoogleService-Info.plist is securely in place."
-          fi
+          echo $GOOGLE_SERVICE_INFO_PLIST | base64 --decode > ios/Runner/GoogleService-Info.plist
+          cp ios/Runner/GoogleService-Info.plist ios/GoogleService-Info.plist
 
       - name: Get Flutter dependencies
         script: |
