@@ -72,13 +72,9 @@ workflows:
         script: |
           cd ios && pod install
 
-      - name: Set up code signing certificates
+      - name: Set up code signing
         script: |
-          app-store-connect fetch-signing-files "com.wafar.user" --type IOS_APP_STORE --create
-
-      - name: Use provisioning profiles
-        script: |
-          xcode-project use-profiles
+          xcode-project use-profiles --automatic
 
       - name: Build ipa for App Store
         script: |
