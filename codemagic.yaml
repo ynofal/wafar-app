@@ -34,7 +34,7 @@ workflows:
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
-          dict>
+          <dict>
               <key>API_KEY</key>
               <string>AIzaSyDyKV_vH04kjoCZHaVpXOI1AA-KEDr405Y</string>
               <key>GCM_SENDER_ID</key>
@@ -74,7 +74,7 @@ workflows:
 
       - name: Set up code signing certificates
         script: |
-          app-store-connect fetch-signing-files "com.wafar.user" --type DISTRIBUTION --create
+          app-store-connect fetch-signing-files "com.wafar.user" --type IOS_APP_STORE --create
 
       - name: Use provisioning profiles
         script: |
