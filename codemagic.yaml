@@ -1,6 +1,6 @@
 workflows:
   ios-workflow:
-    name: Wafar iOS Workflow
+    name: Wafar iOS
     max_build_duration: 120
     instance_type: mac_mini_m2
     integrations:
@@ -72,22 +72,9 @@ workflows:
         script: |
           cd ios && pod install
 
-      - name: Set up code signing and build ipa
+      - name: Build ipa for App Store
         script: |
-          # استخدام xcodebuild مباشرة مع تمرير الأعلام لتجاوز الـ Manual الصارم لو كودماجيك مزعّلنا
-          xcodebuild -workspace ios/Runner.xcworkspace \
-            -scheme Runner \
-            -sdk iphoneos \
-            -configuration Release \
-            -archivePath build/ios/runner.xcarchive \
-            archive \
-            CODE_SIGN_STYLE=Automatic
-
-          xcodebuild -exportArchive \
-            -archivePath build/ios/runner.xcarchive \
-            -exportPath build/ios/ipa \
-            -exportOptionsPlist ios/ExportOptions.plist || xcodebuild -exportArchive -archivePath build/ios/runner.xcarchive -exportPath build/ios/ipa -exportOptionsPlist <(printf '%s\n' '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>method</key><string>app-store</string></dict></plist>')
-
+          flutter build ipa --release --no-codesign
     artifacts:
       - build/ios/ipa/*.ipa
     publishing:
