@@ -72,30 +72,21 @@ workflows:
         script: |
           cd ios && pod install
 
-      - name: Set up code signing settings
+      - name: Set up code signing and build ipa
         script: |
-          xcode-project use-profiles
+          # استخدام xcodebuild مباشرة مع تمرير الأعلام لتجاوز الـ Manual الصارم لو كودماجيك مزعّلنا
+          xcodebuild -workspace ios/Runner.xcworkspace \
+            -scheme Runner \
+            -sdk iphoneos \
+            -configuration Release \
+            -archivePath build/ios/runner.xcarchive \
+            archive \
+            CODE_SIGN_STYLE=Automatic
 
-      - name: Create ExportOptions.plist file
-        script: |
-          cat << 'EOF' > ios/ExportOptions.plist
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>method</key>
-              <string>app-store</string>
-              <key>uploadBitcode</key>
-              <false/>
-              <key>uploadSymbols</key>
-              <true/>
-          </dict>
-          </plist>
-          EOF
-
-      - name: Build IPA for App Store
-        script: |
-          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
+          xcodebuild -exportArchive \
+            -archivePath build/ios/runner.xcarchive \
+            -exportPath build/ios/ipa \
+            -exportOptionsPlist ios/ExportOptions.plist || xcodebuild -exportArchive -archivePath build/ios/runner.xcarchive -exportPath build/ios/ipa -exportOptionsPlist <(printf '%s\n' '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>method</key><string>app-store</string></dict></plist>')
 
     artifacts:
       - build/ios/ipa/*.ipa
