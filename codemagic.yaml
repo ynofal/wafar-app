@@ -11,18 +11,20 @@ workflows:
       cocoapods: "1.16.2"
       vars:
         BUNDLE_ID: "com.wafar.user"
+        COMPILER_INDEX_STORE_ENABLE: "NO"
     scripts:
-      - name: Disable Swift Package Manager
+      - name: Disable Swift Package Manager globally
         script: |
           flutter config --no-enable-swift-package-manager
+          defaults write com.apple.dt.Xcode IDESkipPackagePluginValidation -bool YES
+          defaults write com.apple.dt.Xcode IDESkipMacroValidation -bool YES
 
-      - name: Deep Clean iOS Project
+      - name: Deep Clean Project
         script: |
           flutter clean
           rm -rf ios/Pods
           rm -rf ios/Podfile.lock
           rm -rf ios/.symlinks
-          rm -rf ios/Flutter/Flutter.podspec
           find ios -name "Package.resolved" -type f -delete
 
       - name: Install dependencies
