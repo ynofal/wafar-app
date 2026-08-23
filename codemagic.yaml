@@ -11,6 +11,8 @@ workflows:
       cocoapods: "1.16.2"
       vars:
         BUNDLE_ID: "com.wafar.user"
+        XCODE_WORKSPACE: "ios/Runner.xcworkspace"
+        XCODE_SCHEME: "Runner"
         COMPILER_INDEX_STORE_ENABLE: "NO"
     scripts:
       - name: Disable Swift Package Manager globally
@@ -72,37 +74,14 @@ workflows:
         script: |
           cd ios && pod install
 
-      - name: Configure automatic signing in Xcode project
+      - name: Set up code signing settings
         script: |
-          ruby -e '
-            project_path = "ios/Runner.xcodeproj/project.pbxproj"
-            content = File.read(project_path)
-            content.gsub!(/CODE_SIGN_STYLE = Manual;/, "CODE_SIGN_STYLE = Automatic;")
-            File.write(project_path, content)
-          '
+          xcode-project use-profiles
 
-      - name: Create ExportOptions.plist
+      - name: Build ipa for App Store
         script: |
-          cat << 'EOF' > ios/ExportOptions.plist
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>method</key>
-              <string>app-store</string>
-              <key>uploadBitcode</key>
-              <false/>
-              <key>uploadSymbols</key>
-              <true/>
-              <key>signingStyle</key>
-              <string>automatic</string>
-          </dict>
-          </plist>
-          EOF
-
-      - name: Build IPA for App Store
-        script: |
-          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
+          flutter build ipa --release \
+            --export-options-plist=<(printf '%s\n' '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>method</key><string>app-store</string><key>uploadBitcode</key><false/><key>uploadSymbols</key><true/></dict></plist>')
 
     artifacts:
       - build/ios/ipa/*.ipa
