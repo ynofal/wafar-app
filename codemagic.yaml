@@ -72,21 +72,37 @@ workflows:
         script: |
           cd ios && pod install
 
-      - name: Set up code signing and build ipa
+      - name: Configure automatic signing in Xcode project
         script: |
-          # استخدام xcodebuild مباشرة مع تمرير الأعلام لتجاوز الـ Manual الصارم لو كودماجيك مزعّلنا
-          xcodebuild -workspace ios/Runner.xcworkspace \
-            -scheme Runner \
-            -sdk iphoneos \
-            -configuration Release \
-            -archivePath build/ios/runner.xcarchive \
-            archive \
-            CODE_SIGN_STYLE=Automatic
+          ruby -e '
+            project_path = "ios/Runner.xcodeproj/project.pbxproj"
+            content = File.read(project_path)
+            content.gsub!(/CODE_SIGN_STYLE = Manual;/, "CODE_SIGN_STYLE = Automatic;")
+            File.write(project_path, content)
+          '
 
-          xcodebuild -exportArchive \
-            -archivePath build/ios/runner.xcarchive \
-            -exportPath build/ios/ipa \
-            -exportOptionsPlist ios/ExportOptions.plist || xcodebuild -exportArchive -archivePath build/ios/runner.xcarchive -exportPath build/ios/ipa -exportOptionsPlist <(printf '%s\n' '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>method</key><string>app-store</string></dict></plist>')
+      - name: Create ExportOptions.plist
+        script: |
+          cat << 'EOF' > ios/ExportOptions.plist
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>app-store</string>
+              <key>uploadBitcode</key>
+              <false/>
+              <key>uploadSymbols</key>
+              <true/>
+              <key>signingStyle</key>
+              <string>automatic</string>
+          </dict>
+          </plist>
+          EOF
+
+      - name: Build IPA for App Store
+        script: |
+          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
 
     artifacts:
       - build/ios/ipa/*.ipa
