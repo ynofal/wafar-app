@@ -74,7 +74,7 @@ workflows:
 
       - name: Set up code signing settings
         script: |
-          xcode-project use-profiles
+          xcode-project apply-code-signing
 
       - name: Create ExportOptions.plist file
         script: |
