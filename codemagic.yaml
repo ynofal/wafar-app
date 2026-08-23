@@ -1,6 +1,6 @@
 workflows:
   ios-workflow:
-    name: Wafar iOS Workflow
+    name: Wafar iOS
     max_build_duration: 120
     instance_type: mac_mini_m2
     integrations:
@@ -19,16 +19,13 @@ workflows:
           defaults write com.apple.dt.Xcode IDESkipPackagePluginValidation -bool YES
           defaults write com.apple.dt.Xcode IDESkipMacroValidation -bool YES
 
-      - name: Deep Clean Project and Prepare Build Directories
+      - name: Deep Clean Project
         script: |
           flutter clean
           rm -rf ios/Pods
           rm -rf ios/Podfile.lock
           rm -rf ios/.symlinks
           find ios -name "Package.resolved" -type f -delete
-          mkdir -p build/ios/SourcePackages/checkouts
-          mkdir -p build/ios/SourcePackages/artifacts
-          mkdir -p ~/Library/Caches/org.swift.swiftpm
 
       - name: Ensure GoogleService-Info.plist is in place
         script: |
@@ -75,31 +72,9 @@ workflows:
         script: |
           cd ios && pod install
 
-      - name: Set up code signing settings
+      - name: Build ipa for App Store
         script: |
-          xcode-project use-profiles
-
-      - name: Create ExportOptions.plist file
-        script: |
-          cat << 'EOF' > ios/ExportOptions.plist
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>method</key>
-              <string>app-store</string>
-              <key>uploadBitcode</key>
-              <false/>
-              <key>uploadSymbols</key>
-              <true/>
-          </dict>
-          </plist>
-          EOF
-
-      - name: Build IPA for App Store
-        script: |
-          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
-
+          flutter build ipa --release --no-codesign
     artifacts:
       - build/ios/ipa/*.ipa
     publishing:
