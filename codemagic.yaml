@@ -1,65 +1,35 @@
 workflows:
   ios-workflow:
-    name: Wafar iOS
+    name: Wafar iOS Workflow
     max_build_duration: 120
     instance_type: mac_mini_m2
-
     integrations:
       app_store_connect: Wafar Codemagic
-
     environment:
-      flutter: 3.44.3
-      xcode: 16.4
-      cocoapods: 1.16.2
-
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.wafar.user
-
+      flutter: "3.44.7"
+      xcode: latest
+      cocoapods: "1.16.2"
       vars:
-        BUNDLE_ID: com.wafar.user
-        COMPILER_INDEX_STORE_ENABLE: NO
-
+        BUNDLE_ID: "com.wafar.user"
+        COMPILER_INDEX_STORE_ENABLE: "NO"
     scripts:
-
-      # ==========================================
-      # 1. Disable Flutter Swift Package Manager
-      # ==========================================
-      - name: Disable Swift Package Manager
+      - name: Disable Swift Package Manager globally
         script: |
           flutter config --no-enable-swift-package-manager
+          defaults write com.apple.dt.Xcode IDESkipPackagePluginValidation -bool YES
+          defaults write com.apple.dt.Xcode IDESkipMacroValidation -bool YES
 
-      # ==========================================
-      # 2. Clean Flutter
-      # ==========================================
-      - name: Clean Flutter
+      - name: Deep Clean Project
         script: |
           flutter clean
-
-      # ==========================================
-      # 3. Clean iOS generated files
-      # ==========================================
-      - name: Clean iOS generated files
-        script: |
-          rm -rf ios/.symlinks
           rm -rf ios/Pods
           rm -rf ios/Podfile.lock
-          rm -rf ios/Runner.xcworkspace
-
+          rm -rf ios/.symlinks
           find ios -name "Package.resolved" -type f -delete
 
-          rm -rf ~/Library/Developer/Xcode/DerivedData/*
-          rm -rf ~/Library/Developer/Xcode/SourcePackages/*
-          rm -rf ~/Library/Caches/org.swift.swiftpm/*
-          rm -rf ~/Library/org.swift.swiftpm/*
-
-      # ==========================================
-      # 4. Generate Firebase configuration
-      # ==========================================
-      - name: Generate GoogleService-Info.plist
+      - name: Ensure GoogleService-Info.plist is in place
         script: |
           mkdir -p ios/Runner
-
           cat << 'EOF' > ios/Runner/GoogleService-Info.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -67,89 +37,48 @@ workflows:
           <dict>
               <key>API_KEY</key>
               <string>AIzaSyDyKV_vH04kjoCZHaVpXOI1AA-KEDr405Y</string>
-
               <key>GCM_SENDER_ID</key>
               <string>730828848463</string>
-
               <key>PLIST_VERSION</key>
               <string>1</string>
-
               <key>BUNDLE_ID</key>
               <string>com.wafar.user</string>
-
               <key>PROJECT_ID</key>
               <string>wafar-ccf7b</string>
-
               <key>STORAGE_BUCKET</key>
               <string>wafar-ccf7b.firebasestorage.app</string>
-
               <key>IS_ADS_ENABLED</key>
-              <false/>
-
+              <false></false>
               <key>IS_ANALYTICS_ENABLED</key>
-              <false/>
-
+              <false></false>
               <key>IS_APPINVITE_ENABLED</key>
-              <true/>
-
+              <true></true>
               <key>IS_GCM_ENABLED</key>
-              <true/>
-
+              <true></true>
               <key>IS_SIGNIN_ENABLED</key>
-              <true/>
-
+              <true></true>
               <key>GOOGLE_APP_ID</key>
               <string>1:730828848463:ios:3761c4afa6e87da5f5593a</string>
           </dict>
           </plist>
           EOF
+          cp ios/Runner/GoogleService-Info.plist ios/GoogleService-Info.plist
 
-      # ==========================================
-      # 5. Flutter dependencies
-      # ==========================================
-      - name: Get Flutter dependencies
+      - name: Install dependencies
         script: |
           flutter pub get
 
-      # ==========================================
-      # 6. CocoaPods
-      # ==========================================
       - name: Install CocoaPods
         script: |
-          cd ios
-          pod install --repo-update
+          cd ios && pod install
 
-      # ==========================================
-      # 7. Configure Apple signing
-      # ==========================================
-      - name: Set up App Store code signing
+      - name: Set up code signing and build ipa
         script: |
           xcode-project use-profiles
-
-      # ==========================================
-      # 8. Set App version and Build number
-      # ==========================================
-      - name: Set App version and Build number
-        script: |
-          /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName وفّر" ios/Runner/Info.plist
-          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 1.0.0" ios/Runner/Info.plist
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 2" ios/Runner/Info.plist
-
-      # ==========================================
-      # 9. Build SIGNED IPA
-      # ==========================================
-      - name: Build signed App Store IPA
-        script: |
-          flutter build ipa \
-            --release \
-            --export-options-plist=/Users/builder/export_options.plist
+          xcode-project build-ipa --workspace ios/Runner.xcworkspace --scheme Runner
 
     artifacts:
       - build/ios/ipa/*.ipa
-
-    # ==========================================
-    # 10. Upload automatically to TestFlight
-    # ==========================================
     publishing:
       app_store_connect:
         auth: integration
