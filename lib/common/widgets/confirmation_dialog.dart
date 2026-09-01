@@ -13,8 +13,9 @@ class ConfirmationDialog extends StatelessWidget {
   final Function onYesPressed;
   final bool isLogOut;
   final Function? onNoPressed;
+  final bool? isLoading;
   const ConfirmationDialog({super.key, required this.icon, this.title, required this.description, required this.onYesPressed,
-    this.isLogOut = false, this.onNoPressed});
+    this.isLogOut = false, this.onNoPressed, this.isLoading});
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +48,8 @@ class ConfirmationDialog extends StatelessWidget {
             const SizedBox(height: Dimensions.paddingSizeLarge),
 
             GetBuilder<OrderController>(builder: (orderController) {
-              return !orderController.isLoading ? Row(children: [
+              final bool loading = isLoading ?? orderController.isLoading;
+              return !loading ? Row(children: [
                 Expanded(child: TextButton(
                   onPressed: () => isLogOut ? onYesPressed() : onNoPressed != null ? onNoPressed!() : Get.back(),
                   style: TextButton.styleFrom(

@@ -71,6 +71,7 @@ class ProfileBgWidget extends StatelessWidget {
                 Get.dialog(ConfirmationDialog(icon: Images.support,
                   title: 'are_you_sure_to_delete_account'.tr,
                   description: 'it_will_remove_your_all_information'.tr, isLogOut: true,
+                  isLoading: Get.find<ProfileController>().isLoading,
                   onYesPressed: () => Get.find<ProfileController>().deleteUser(),
                 ), useSafeArea: false);
               }

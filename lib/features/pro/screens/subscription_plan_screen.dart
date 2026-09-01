@@ -215,8 +215,6 @@ class _SubscribedView extends StatelessWidget {
 
           const SizedBox(height: Dimensions.paddingSizeExtraLarge),
           const _TermsLink(),
-          const SizedBox(height: Dimensions.paddingSizeLarge),
-
           const SizedBox(height: Dimensions.paddingSizeExtraLarge),
         ],
       ),
@@ -293,6 +291,8 @@ class _UnsubscribedView extends StatelessWidget {
 
           const SizedBox(height: Dimensions.paddingSizeExtraLarge),
           const _TermsLink(),
+          const SizedBox(height: Dimensions.paddingSizeSmall),
+          const _AutoRenewalDisclosure(),
           const SizedBox(height: Dimensions.paddingSizeLarge),
 
           const SizedBox(height: Dimensions.paddingSizeExtraLarge),
@@ -377,6 +377,8 @@ class _RenewalView extends StatelessWidget {
 
           const SizedBox(height: Dimensions.paddingSizeExtraLarge),
           const _TermsLink(),
+          const SizedBox(height: Dimensions.paddingSizeSmall),
+          const _AutoRenewalDisclosure(),
           const SizedBox(height: Dimensions.paddingSizeExtraLarge),
         ],
       ),
@@ -415,16 +417,40 @@ class _TermsLink extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: GestureDetector(
-        onTap: () => _showTerms(context),
-        child: Text(
-          'terms_and_condition'.tr,
-          style: robotoMedium.copyWith(
-            fontSize: Dimensions.fontSizeDefault,
-            decoration: TextDecoration.underline,
-            color: Theme.of(context).textTheme.bodyLarge?.color,
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        spacing: Dimensions.paddingSizeSmall,
+        children: [
+          GestureDetector(
+            onTap: () => _showTerms(context),
+            child: Text(
+              'terms_and_condition'.tr,
+              style: robotoMedium.copyWith(
+                fontSize: Dimensions.fontSizeDefault,
+                decoration: TextDecoration.underline,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
+              ),
+            ),
           ),
-        ),
+          Text(
+            '|',
+            style: robotoMedium.copyWith(
+              fontSize: Dimensions.fontSizeDefault,
+              color: Theme.of(context).hintColor,
+            ),
+          ),
+          GestureDetector(
+            onTap: () => Get.toNamed(RouteHelper.privacyPolicy),
+            child: Text(
+              'privacy_policy'.tr,
+              style: robotoMedium.copyWith(
+                fontSize: Dimensions.fontSizeDefault,
+                decoration: TextDecoration.underline,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -452,5 +478,24 @@ class _TermsLink extends StatelessWidget {
         builder: (context) => const ProTermsBottomSheetWidget(),
       );
     }
+  }
+}
+
+class _AutoRenewalDisclosure extends StatelessWidget {
+  const _AutoRenewalDisclosure();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: Dimensions.paddingSizeSmall),
+      child: Text(
+        'subscription_renewal_disclosure'.tr,
+        textAlign: TextAlign.center,
+        style: robotoRegular.copyWith(
+          fontSize: Dimensions.fontSizeExtraSmall,
+          color: Theme.of(context).hintColor,
+        ),
+      ),
+    );
   }
 }

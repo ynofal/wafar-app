@@ -143,7 +143,7 @@ class ProfileController extends GetxController implements GetxService {
     Response response = await profileServiceInterface.deleteUser();
     _isLoading = false;
     if (response.statusCode == 200) {
-      await Get.find<AuthController>().clearSharedData(removeToken: false);
+      await Get.find<AuthController>().clearSharedData(removeToken: true);
       await Get.find<AuthController>().clearUserNumberAndPassword();
       await Get.find<CartController>().clearCartList();
       if(Get.find<AuthController>().isActiveRememberMe) {
@@ -152,10 +152,9 @@ class ProfileController extends GetxController implements GetxService {
       Get.find<FavouriteController>().removeFavourite();
       setForceFullyUserEmpty();
       showCustomSnackBar('your_account_remove_successfully'.tr, isError: false);
-      _isLoading = false;
       Get.find<LocationController>().navigateToLocationScreen('splash', offNamed: true);
     } else {
-      _isLoading = false;
+      showCustomSnackBar('there_is_a_problem_on_removing_your_account'.tr, isError: true);
       Get.back();
     }
     update();

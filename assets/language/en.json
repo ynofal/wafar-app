@@ -2569,6 +2569,7 @@
   "active_since": "Active Since",
   "are_you_sure_to_cancel_subscription": "Are you sure you want to cancel your subscription?",
   "cancel_subscription": "Cancel Subscription",
+  "subscription_renewal_disclosure": "Your subscription will automatically renew unless canceled at least 24 hours before the end of the current period. You can manage or cancel your subscription in your App Store account settings.",
   "days_remaining": "Days Remaining",
   "discount_on_all_orders": "Discount on all orders",
   "enjoy_unlimited_free_deliveries": "Enjoy unlimited free deliveries",
