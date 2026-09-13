@@ -84,7 +84,7 @@
 		<string>This app requires access to the camera to upload a profile picture.</string>
 
 		<key>NSLocationWhenInUseUsageDescription</key>
-		<string>This app needs access to your location to manage restaurant coverage and add a new address.</string>
+		<string>Wafar uses your location to show available stores, products, offers, and services in your area.</string>
 
 		<key>NSMicrophoneUsageDescription</key>
 		<string>This app requires microphone access to record your voice for speech recognition.</string>
